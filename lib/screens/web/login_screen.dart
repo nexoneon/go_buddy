@@ -142,64 +142,67 @@ class _WebLoginScreenState extends State<WebLoginScreen>
               ),
             ),
           ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(64),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+          // Content - wrapped in SingleChildScrollView to prevent overflow
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 48),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Logo
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.rocket_launch_rounded,
+                      size: 48,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.rocket_launch_rounded,
-                    size: 48,
-                    color: Colors.white,
+                  const SizedBox(height: 40),
+                  // Welcome text
+                  const Text(
+                    'Welcome to\nGo Buddy',
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.1,
+                      letterSpacing: -1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 48),
-                // Welcome text
-                const Text(
-                  'Welcome to\nGo Buddy',
-                  style: TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    height: 1.1,
-                    letterSpacing: -1,
+                  const SizedBox(height: 20),
+                  Text(
+                    'Your trusted delivery partner for fast, reliable,\nand seamless logistics solutions.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.85),
+                      height: 1.6,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Your trusted delivery partner for fast, reliable,\nand seamless logistics solutions.',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white.withOpacity(0.85),
-                    height: 1.6,
+                  const SizedBox(height: 40),
+                  // Feature highlights
+                  _buildFeatureItem(
+                    Icons.speed_rounded,
+                    'Lightning Fast Delivery',
                   ),
-                ),
-                const SizedBox(height: 48),
-                // Feature highlights
-                _buildFeatureItem(
-                  Icons.speed_rounded,
-                  'Lightning Fast Delivery',
-                ),
-                const SizedBox(height: 16),
-                _buildFeatureItem(
-                  Icons.location_on_rounded,
-                  'Real-time Order Tracking',
-                ),
-                const SizedBox(height: 16),
-                _buildFeatureItem(
-                  Icons.verified_user_rounded,
-                  'Secure & Reliable Service',
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  _buildFeatureItem(
+                    Icons.location_on_rounded,
+                    'Real-time Order Tracking',
+                  ),
+                  const SizedBox(height: 14),
+                  _buildFeatureItem(
+                    Icons.verified_user_rounded,
+                    'Secure & Reliable Service',
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -1,10 +1,17 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'config/config.dart';
 import 'screens/web/web_screens.dart';
+import 'screens/mobile/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MyApp());
 }
 
@@ -29,50 +36,8 @@ class MyApp extends StatelessWidget {
       // Web platform: Show Bootstrap screen which handles auth routing
       return const WebBootstrapScreen();
     } else {
-      // Mobile platform: Show mobile bootstrap/home screen
-      // TODO: Replace with MobileBootstrapScreen when ready
-      return const _MobilePlaceholderScreen();
+      // Mobile platform: Show MobileHomeScreen (Splash) → then navigates to LoginScreen
+      return const MobileHomeScreen();
     }
-  }
-}
-
-/// Placeholder screen for mobile until mobile screens are ready
-class _MobilePlaceholderScreen extends StatelessWidget {
-  const _MobilePlaceholderScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Go Buddy'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.rocket_launch_rounded,
-              size: 80,
-              color: AppTheme.primaryColor,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Go Buddy Mobile',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Mobile version coming soon!',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

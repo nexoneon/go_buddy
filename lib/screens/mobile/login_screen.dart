@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../config/config.dart';
+import '../../services/auth_service.dart';
 
 /// Mobile Login Screen
 ///
 /// Touch-optimized single-column login screen for mobile devices (Android/iOS).
-/// Features compact design with gesture-friendly inputs and smooth animations.
+/// Features phone number authentication with OTP verification via Firebase.
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
 
@@ -15,14 +17,30 @@ class MobileLoginScreen extends StatefulWidget {
 class _MobileLoginScreenState extends State<MobileLoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final _phoneController = TextEditingController();
+  final _otpController = TextEditingController();
+  final AuthService _authService = AuthService();
+
   bool _isLoading = false;
+  bool _showOtpField = false;
+  String _selectedCountryCode = '+91';
+  String? _errorMessage;
+  int _resendCountdown = 0;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  // Country codes list
+  final List<Map<String, String>> _countryCodes = [
+    {'code': '+91', 'country': 'IN', 'name': 'India'},
+    // {'code': '+1', 'country': 'US', 'name': 'United States'},
+    // {'code': '+44', 'country': 'UK', 'name': 'United Kingdom'},
+    // {'code': '+971', 'country': 'AE', 'name': 'UAE'},
+    // {'code': '+966', 'country': 'SA', 'name': 'Saudi Arabia'},
+    // {'code': '+65', 'country': 'SG', 'name': 'Singapore'},
+    // {'code': '+61', 'country': 'AU', 'name': 'Australia'},
+  ];
 
   @override
   void initState() {
@@ -50,20 +68,131 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _phoneController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
+  String get _fullPhoneNumber =>
+      '$_selectedCountryCode${_phoneController.text.trim()}';
+
+  void _handleSendOTP() async {
     if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
-      // TODO: Implement actual login logic
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      await _authService.sendOTP(
+        phoneNumber: _fullPhoneNumber,
+        onCodeSent: (verificationId, resendToken) {
+          setState(() {
+            _isLoading = false;
+            _showOtpField = true;
+            _startResendCountdown();
+          });
+          _showSnackBar('OTP sent to $_fullPhoneNumber', isSuccess: true);
+        },
+        onVerificationCompleted: (credential) async {
+          // Auto-verification on Android
+          setState(() => _isLoading = true);
+          final success = await _authService.signInWithCredential(credential);
           setState(() => _isLoading = false);
+          if (success && mounted) {
+            _navigateToHome();
+          }
+        },
+        onError: (error) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = error;
+          });
+          _showSnackBar(error, isSuccess: false);
+        },
+      );
+    }
+  }
+
+  void _handleVerifyOTP() async {
+    final otp = _otpController.text.trim();
+    if (otp.length != 6) {
+      setState(() => _errorMessage = 'Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    await _authService.verifyOTP(
+      otp: otp,
+      onSuccess: () {
+        setState(() => _isLoading = false);
+        _navigateToHome();
+      },
+      onError: (error) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = error;
+        });
+        _showSnackBar(error, isSuccess: false);
+      },
+    );
+  }
+
+  void _startResendCountdown() {
+    _resendCountdown = 30;
+    _countdownTick();
+  }
+
+  void _countdownTick() {
+    if (_resendCountdown > 0 && mounted) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          setState(() => _resendCountdown--);
+          _countdownTick();
         }
       });
+    }
+  }
+
+  void _handleResendOTP() {
+    if (_resendCountdown == 0) {
+      _handleSendOTP();
+    }
+  }
+
+  void _handleChangeNumber() {
+    setState(() {
+      _showOtpField = false;
+      _otpController.clear();
+      _errorMessage = null;
+      _resendCountdown = 0;
+    });
+    _authService.resetVerification();
+  }
+
+  void _navigateToHome() {
+    // TODO: Navigate to home screen
+    _showSnackBar('Login successful!', isSuccess: true);
+  }
+
+  void _showSnackBar(String message, {required bool isSuccess}) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isSuccess
+              ? AppTheme.successColor
+              : AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
     }
   }
 
@@ -96,11 +225,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     // Login Form
                     _buildLoginForm(),
                     const SizedBox(height: 24),
-                    // Social Login
-                    _buildSocialLogin(),
-                    const SizedBox(height: 32),
-                    // Sign Up Link
-                    _buildSignUpLink(),
+                    // Terms & Privacy
+                    _buildTermsText(),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -133,13 +259,15 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         const SizedBox(height: 24),
         // Title
         Text(
-          'Welcome Back',
+          _showOtpField ? 'Verify OTP' : 'Welcome',
           style: MobileTheme.displayLarge.copyWith(color: AppTheme.textPrimary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
-          'Sign in to continue to Go Buddy',
+          _showOtpField
+              ? 'Enter the 6-digit code sent to\n$_fullPhoneNumber'
+              : 'Enter your mobile number to continue',
           style: MobileTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),
@@ -156,181 +284,312 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Email Field
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              decoration: MobileTheme.inputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email',
-                prefixIcon: const Icon(Icons.email_outlined, size: 22),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!value.contains('@')) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
+            if (!_showOtpField) ...[
+              // Phone Number Field
+              _buildPhoneField(),
+              const SizedBox(height: 24),
+              // Send OTP Button
+              _buildSendOtpButton(),
+            ] else ...[
+              // OTP Field
+              _buildOtpField(),
+              const SizedBox(height: 16),
+              // Resend & Change Number
+              _buildOtpActions(),
+              const SizedBox(height: 24),
+              // Verify OTP Button
+              _buildVerifyOtpButton(),
+            ],
+            // Error Message
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              _buildErrorMessage(),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Password Field
-            TextFormField(
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _handleLogin(),
-              decoration: MobileTheme.inputDecoration(
-                labelText: 'Password',
-                hintText: 'Enter your password',
-                prefixIcon: const Icon(Icons.lock_outline, size: 22),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    size: 22,
-                  ),
-                  onPressed: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  },
-                ),
+  Widget _buildPhoneField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Mobile Number',
+          style: MobileTheme.labelLarge.copyWith(
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Country Code Dropdown
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.borderColor),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
-                }
-                if (value.length < 6) {
-                  return 'Password must be at least 6 characters';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 8),
-
-            // Forgot Password
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Forgot password
+              child: PopupMenuButton<String>(
+                initialValue: _selectedCountryCode,
+                onSelected: (value) {
+                  setState(() => _selectedCountryCode = value);
                 },
-                style: MobileTheme.textButtonStyle,
-                child: const Text('Forgot Password?'),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Sign In Button
-            SizedBox(
-              height: MobileTheme.buttonHeight,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
-                style: MobileTheme.primaryButtonStyle,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      )
-                    : const Text(
-                        'Sign In',
-                        style: TextStyle(
-                          fontSize: 16,
+                offset: const Offset(0, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        _selectedCountryCode,
+                        style: MobileTheme.bodyLarge.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.keyboard_arrow_down, size: 20),
+                    ],
+                  ),
+                ),
+                itemBuilder: (context) => _countryCodes.map((country) {
+                  return PopupMenuItem<String>(
+                    value: country['code'],
+                    child: Row(
+                      children: [
+                        Text(
+                          country['code']!,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          country['name']!,
+                          style: TextStyle(color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Phone Number Input
+            Expanded(
+              child: TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.done,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                decoration: MobileTheme.inputDecoration(
+                  labelText: 'Phone Number',
+                  hintText: 'Enter 10 digit number',
+                  prefixIcon: const Icon(Icons.phone_android_rounded, size: 22),
+                ),
+                style: MobileTheme.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.5,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your mobile number';
+                  }
+                  if (value.length < 10) {
+                    return 'Please enter a valid 10-digit number';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (_) => _handleSendOTP(),
               ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildSocialLogin() {
+  Widget _buildOtpField() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Divider
-        Row(
-          children: [
-            const Expanded(child: Divider()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('or sign in with', style: MobileTheme.bodyMedium),
-            ),
-            const Expanded(child: Divider()),
-          ],
+        Text(
+          'Enter OTP',
+          style: MobileTheme.labelLarge.copyWith(
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        const SizedBox(height: 20),
-
-        // Social Buttons Row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildSocialIconButton(
-              Icons.g_mobiledata_rounded,
-              onPressed: () {},
-            ),
-            const SizedBox(width: 20),
-            _buildSocialIconButton(Icons.apple, onPressed: () {}),
-            const SizedBox(width: 20),
-            _buildSocialIconButton(Icons.phone_android, onPressed: () {}),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          textAlign: TextAlign.center,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(6),
           ],
+          decoration: MobileTheme.inputDecoration(
+            labelText: 'OTP Code',
+            hintText: '• • • • • •',
+            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 22),
+          ),
+          style: MobileTheme.displayMedium.copyWith(
+            letterSpacing: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          onFieldSubmitted: (_) => _handleVerifyOTP(),
         ),
       ],
     );
   }
 
-  Widget _buildSocialIconButton(
-    IconData icon, {
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: AppTheme.surfaceColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderColor),
-          ),
-          child: Icon(icon, size: 28, color: AppTheme.textPrimary),
+  Widget _buildOtpActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Change Number Button
+        TextButton.icon(
+          onPressed: _isLoading ? null : _handleChangeNumber,
+          style: MobileTheme.textButtonStyle,
+          icon: const Icon(Icons.edit, size: 18),
+          label: const Text('Change Number'),
         ),
+        // Resend OTP Button
+        TextButton(
+          onPressed: (_isLoading || _resendCountdown > 0)
+              ? null
+              : _handleResendOTP,
+          style: MobileTheme.textButtonStyle,
+          child: Text(
+            _resendCountdown > 0
+                ? 'Resend in ${_resendCountdown}s'
+                : 'Resend OTP',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSendOtpButton() {
+    return SizedBox(
+      height: MobileTheme.buttonHeight,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleSendOTP,
+        style: MobileTheme.primaryButtonStyle,
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text(
+                    'Get OTP',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward_rounded, size: 20),
+                ],
+              ),
       ),
     );
   }
 
-  Widget _buildSignUpLink() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("Don't have an account? ", style: MobileTheme.bodyMedium),
-        GestureDetector(
-          onTap: () {
-            // TODO: Navigate to sign up
-          },
-          child: Text(
-            'Sign Up',
-            style: MobileTheme.labelLarge.copyWith(
-              color: AppTheme.primaryColor,
+  Widget _buildVerifyOtpButton() {
+    return SizedBox(
+      height: MobileTheme.buttonHeight,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleVerifyOTP,
+        style: MobileTheme.primaryButtonStyle,
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.verified_user_rounded, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Verify & Login',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.errorColor.withAlpha(26),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.errorColor.withAlpha(77)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: AppTheme.errorColor, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _errorMessage!,
+              style: MobileTheme.bodyMedium.copyWith(
+                color: AppTheme.errorColor,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTermsText() {
+    return Text.rich(
+      TextSpan(
+        text: 'By continuing, you agree to our ',
+        style: MobileTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+        children: [
+          TextSpan(
+            text: 'Terms of Service',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const TextSpan(text: ' and '),
+          TextSpan(
+            text: 'Privacy Policy',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+      textAlign: TextAlign.center,
     );
   }
 }

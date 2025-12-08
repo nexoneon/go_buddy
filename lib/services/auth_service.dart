@@ -1,62 +1,202 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 /// Authentication Service
-/// Handles user authentication state and login/logout functionality
+/// Handles user authentication state and Firebase phone authentication
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal();
 
-  bool _isAuthenticated = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   bool _isInitialized = false;
-  String? _userEmail;
-  String? _userName;
+  bool _isLoading = false;
+  String? _verificationId;
+  int? _resendToken;
+  String? _phoneNumber;
+  String? _errorMessage;
 
-  bool get isAuthenticated => _isAuthenticated;
+  // Getters
+  bool get isAuthenticated => _auth.currentUser != null;
   bool get isInitialized => _isInitialized;
-  String? get userEmail => _userEmail;
-  String? get userName => _userName;
+  bool get isLoading => _isLoading;
+  User? get currentUser => _auth.currentUser;
+  String? get userPhone => _auth.currentUser?.phoneNumber ?? _phoneNumber;
+  String? get userName => _auth.currentUser?.displayName;
+  String? get errorMessage => _errorMessage;
+  String? get verificationId => _verificationId;
 
-  /// Initialize the auth service and check for existing session
+  /// Initialize the auth service
   Future<void> initialize() async {
-    // Simulate checking for existing session (e.g., from localStorage or Firebase)
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // Listen to auth state changes
+    _auth.authStateChanges().listen((User? user) {
+      notifyListeners();
+    });
 
-    // TODO: Replace with actual session check
-    // For now, we'll default to not authenticated
-    _isAuthenticated = false;
     _isInitialized = true;
     notifyListeners();
   }
 
-  /// Sign in with email and password
-  Future<bool> signIn({required String email, required String password}) async {
+  /// Send OTP to phone number
+  /// [phoneNumber] should include country code, e.g., "+91XXXXXXXXXX"
+  Future<bool> sendOTP({
+    required String phoneNumber,
+    required Function(String verificationId, int? resendToken) onCodeSent,
+    required Function(PhoneAuthCredential credential) onVerificationCompleted,
+    required Function(String errorMessage) onError,
+  }) async {
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      _isLoading = true;
+      _errorMessage = null;
+      _phoneNumber = phoneNumber;
+      notifyListeners();
 
-      // TODO: Replace with actual authentication logic
-      // For demo, accept any non-empty credentials
-      if (email.isNotEmpty && password.isNotEmpty) {
-        _isAuthenticated = true;
-        _userEmail = email;
-        _userName = email.split('@').first;
-        notifyListeners();
-        return true;
-      }
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // Auto-verification (Android only)
+          _isLoading = false;
+          notifyListeners();
+          onVerificationCompleted(credential);
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          _isLoading = false;
+          _errorMessage = _getErrorMessage(e.code);
+          notifyListeners();
+          onError(_errorMessage!);
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          _verificationId = verificationId;
+          _resendToken = resendToken;
+          _isLoading = false;
+          notifyListeners();
+          onCodeSent(verificationId, resendToken);
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+          notifyListeners();
+        },
+        forceResendingToken: _resendToken,
+      );
+
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Failed to send OTP. Please try again.';
+      notifyListeners();
+      onError(_errorMessage!);
+      return false;
+    }
+  }
+
+  /// Verify OTP and sign in
+  Future<bool> verifyOTP({
+    required String otp,
+    required Function() onSuccess,
+    required Function(String errorMessage) onError,
+  }) async {
+    if (_verificationId == null) {
+      onError('Verification session expired. Please request OTP again.');
+      return false;
+    }
+
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      // Create credential
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: otp,
+      );
+
+      // Sign in with credential
+      await _auth.signInWithCredential(credential);
+
+      _isLoading = false;
+      _verificationId = null;
+      notifyListeners();
+      onSuccess();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _errorMessage = _getErrorMessage(e.code);
+      notifyListeners();
+      onError(_errorMessage!);
       return false;
     } catch (e) {
-      debugPrint('Sign in error: $e');
+      _isLoading = false;
+      _errorMessage = 'Verification failed. Please try again.';
+      notifyListeners();
+      onError(_errorMessage!);
+      return false;
+    }
+  }
+
+  /// Sign in with credential (for auto-verification)
+  Future<bool> signInWithCredential(PhoneAuthCredential credential) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _auth.signInWithCredential(credential);
+
+      _isLoading = false;
+      _verificationId = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Sign in failed. Please try again.';
+      notifyListeners();
       return false;
     }
   }
 
   /// Sign out the current user
   Future<void> signOut() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    _isAuthenticated = false;
-    _userEmail = null;
-    _userName = null;
+    await _auth.signOut();
+    _verificationId = null;
+    _resendToken = null;
+    _phoneNumber = null;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  /// Get user-friendly error message
+  String _getErrorMessage(String code) {
+    switch (code) {
+      case 'invalid-phone-number':
+        return 'Invalid phone number. Please check and try again.';
+      case 'too-many-requests':
+        return 'Too many requests. Please try again later.';
+      case 'invalid-verification-code':
+        return 'Invalid OTP. Please check and try again.';
+      case 'session-expired':
+        return 'Session expired. Please request OTP again.';
+      case 'quota-exceeded':
+        return 'SMS quota exceeded. Please try again later.';
+      case 'network-request-failed':
+        return 'Network error. Please check your connection.';
+      default:
+        return 'Something went wrong. Please try again.';
+    }
+  }
+
+  /// Clear error message
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  /// Reset verification state
+  void resetVerification() {
+    _verificationId = null;
+    _resendToken = null;
+    _errorMessage = null;
     notifyListeners();
   }
 }

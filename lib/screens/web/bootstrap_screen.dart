@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../config/config.dart';
-import '../../services/services.dart';
-import 'web_screens.dart';
+import '../../services/auth_service.dart';
+import '../../services/user_service.dart';
+import 'web_admin_login.dart';
+import 'web_admin_dashboard.dart';
 
 /// Web Bootstrap Screen
 ///
 /// Handles initial app loading, auth state checking, and routing
-/// to the appropriate screen (Login or Dashboard)
+/// Only allows admin users (staff or superuser)
 class WebBootstrapScreen extends StatefulWidget {
   const WebBootstrapScreen({super.key});
 
@@ -16,6 +18,9 @@ class WebBootstrapScreen extends StatefulWidget {
 
 class _WebBootstrapScreenState extends State<WebBootstrapScreen>
     with SingleTickerProviderStateMixin {
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -52,41 +57,88 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
   }
 
   Future<void> _initializeApp() async {
-    final authService = AuthService();
-
     // Update loading message
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
       setState(() => _loadingMessage = 'Checking authentication...');
     }
 
-    // Initialize auth service
-    await authService.initialize();
+    // Check if user is logged in
+    final currentUser = _authService.currentUser;
 
-    // Update loading message
+    if (currentUser == null) {
+      // Not logged in - go to login
+      if (mounted) {
+        setState(() => _loadingMessage = 'Redirecting to login...');
+      }
+      await Future.delayed(const Duration(milliseconds: 500));
+      _navigateToLogin();
+      return;
+    }
+
+    // User is logged in - check if admin
     if (mounted) {
-      setState(() => _loadingMessage = 'Loading resources...');
+      setState(() => _loadingMessage = 'Verifying admin access...');
+    }
+
+    final uid = currentUser.uid;
+    final userExists = await _userService.userExists(uid);
+
+    if (!userExists) {
+      // User not in database - logout and redirect
+      await _authService.signOut();
+      _navigateToLogin();
+      return;
+    }
+
+    // Get user data
+    final user = await _userService.getUser(uid);
+
+    if (user == null) {
+      // Error loading user - logout and redirect
+      await _authService.signOut();
+      _navigateToLogin();
+      return;
+    }
+
+    // Check if user is admin
+    if (!user.isStaff && !user.isSuperuser) {
+      // Not admin - logout and redirect
+      await _authService.signOut();
+      _navigateToLogin();
+      return;
+    }
+
+    // Admin user - proceed to dashboard
+    if (mounted) {
+      setState(() => _loadingMessage = 'Loading dashboard...');
     }
     await Future.delayed(const Duration(milliseconds: 500));
-
-    // Navigate to appropriate screen
-    if (mounted) {
-      _navigateToNextScreen(authService.isAuthenticated);
-    }
+    _navigateToDashboard();
   }
 
-  void _navigateToNextScreen(bool isAuthenticated) {
-    Widget nextScreen;
-
-    if (isAuthenticated) {
-      nextScreen = const WebDashboardScreen();
-    } else {
-      nextScreen = const WebLoginScreen();
-    }
+  void _navigateToLogin() {
+    if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const WebAdminLoginScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
+  }
+
+  void _navigateToDashboard() {
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const WebAdminDashboard(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -105,15 +157,11 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
-              AppTheme.secondaryColor.withOpacity(0.05),
-              AppTheme.backgroundColor,
-            ],
+            colors: [AppTheme.primaryColor, AppTheme.primaryLight],
           ),
         ),
         child: Center(
@@ -131,11 +179,11 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        gradient: WebTheme.primaryGradient,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(32),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryColor.withOpacity(0.4),
+                            color: Colors.black.withAlpha(77),
                             blurRadius: 40,
                             spreadRadius: 0,
                             offset: const Offset(0, 20),
@@ -143,46 +191,44 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
                         ],
                       ),
                       child: const Icon(
-                        Icons.rocket_launch_rounded,
+                        Icons.admin_panel_settings,
                         size: 56,
-                        color: Colors.white,
+                        color: AppTheme.primaryColor,
                       ),
                     ),
                     const SizedBox(height: 40),
 
                     // App Name
-                    Text(
-                      'Go Buddy',
+                    const Text(
+                      'Go Buddy Admin',
                       style: TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
+                        color: Colors.white,
                         letterSpacing: -1,
                       ),
                     ),
                     const SizedBox(height: 8),
 
                     // Tagline
-                    Text(
-                      'Your Delivery Partner',
+                    const Text(
+                      'Admin Control Panel',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.textSecondary,
+                        color: Colors.white70,
                         letterSpacing: 2,
                       ),
                     ),
                     const SizedBox(height: 60),
 
                     // Loading Indicator
-                    SizedBox(
+                    const SizedBox(
                       width: 40,
                       height: 40,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppTheme.primaryColor,
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -193,10 +239,10 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
                       child: Text(
                         _loadingMessage,
                         key: ValueKey(_loadingMessage),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.textTertiary,
+                          color: Colors.white70,
                         ),
                       ),
                     ),

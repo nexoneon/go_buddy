@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../config/config.dart';
+import '../../services/auth_service.dart';
+import '../../services/user_service.dart';
 import 'login_screen.dart';
+import 'profile_screen.dart';
+import 'main_home_screen.dart';
 
 /// Mobile Home Screen (Splash Screen)
 ///
 /// This is the initial splash screen for mobile applications (Android/iOS).
-/// Automatically navigates to MobileLoginScreen after 3 seconds.
+/// Checks if user is already logged in and navigates accordingly.
 class MobileHomeScreen extends StatefulWidget {
   const MobileHomeScreen({super.key});
 
@@ -15,6 +19,9 @@ class MobileHomeScreen extends StatefulWidget {
 
 class _MobileHomeScreenState extends State<MobileHomeScreen>
     with SingleTickerProviderStateMixin {
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -45,22 +52,102 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
 
     _animationController.forward();
 
-    // Navigate to LoginScreen after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const MobileLoginScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
-      }
-    });
+    // Check auth state and navigate after animation
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    // Wait for splash animation to complete (minimum 2 seconds)
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Check if user is logged in
+    final currentUser = _authService.currentUser;
+
+    if (currentUser == null) {
+      // Not logged in - go to login screen
+      _navigateToLogin();
+      return;
+    }
+
+    // User is logged in - check if user exists in Firestore
+    final uid = currentUser.uid;
+    final userExists = await _userService.userExists(uid);
+
+    if (!userExists) {
+      // New user - create user document and go to profile screen
+      await _userService.createUser(
+        uid: uid,
+        phoneNumber: currentUser.phoneNumber ?? '',
+      );
+      _navigateToProfile();
+      return;
+    }
+
+    // Existing user - get user data
+    final user = await _userService.getUser(uid);
+
+    if (user == null) {
+      // Error loading user data - go to login
+      debugPrint('❌ Error loading user data, redirecting to login');
+      _navigateToLogin();
+      return;
+    }
+
+    // Update last login
+    await _userService.updateLastLogin(uid);
+
+    // Check if profile is complete
+    if (!user.isProfileComplete) {
+      // Profile incomplete - go to profile screen
+      _navigateToProfile();
+    } else {
+      // Profile complete - go to main home screen
+      _navigateToMainHome();
+    }
+  }
+
+  void _navigateToLogin() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MobileLoginScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
+  }
+
+  void _navigateToProfile() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MobileProfileScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
+  }
+
+  void _navigateToMainHome() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MainHomeScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override

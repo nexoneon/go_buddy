@@ -6,7 +6,7 @@ import 'login_screen.dart';
 
 /// Main Home Screen
 ///
-/// The main home screen shown after successful login with complete profile
+/// Service booking home screen with categories and bottom navigation
 class MainHomeScreen extends StatefulWidget {
   const MainHomeScreen({super.key});
 
@@ -17,6 +17,41 @@ class MainHomeScreen extends StatefulWidget {
 class _MainHomeScreenState extends State<MainHomeScreen> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  int _selectedIndex = 2; // Home is selected by default
+
+  final List<ServiceCategory> _services = [
+    ServiceCategory(
+      'AC Technician',
+      Icons.ac_unit,
+      '192',
+      const Color(0xFF4FC3F7),
+    ),
+    ServiceCategory(
+      'Cleaning Services',
+      Icons.cleaning_services,
+      '155',
+      const Color(0xFFFFB74D),
+    ),
+    ServiceCategory(
+      'Appliance Repair',
+      Icons.build,
+      '174',
+      const Color(0xFF81C784),
+    ),
+    ServiceCategory(
+      'Beauty Services',
+      Icons.face,
+      '94',
+      const Color(0xFFE57373),
+    ),
+    ServiceCategory(
+      'Electrician',
+      Icons.electrical_services,
+      '102',
+      const Color(0xFFFFD54F),
+    ),
+    ServiceCategory('Plumbers', Icons.plumbing, '106', const Color(0xFF64B5F6)),
+  ];
 
   @override
   void initState() {
@@ -38,14 +73,17 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+            ),
             child: const Text('Logout'),
           ),
         ],
@@ -65,49 +103,315 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     }
   }
 
+  void _onNavItemTapped(int index) {
+    setState(() => _selectedIndex = index);
+    // TODO: Navigate to respective screens
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = _userService.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Go Buddy'),
-        centerTitle: true,
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: _handleLogout,
-            tooltip: 'Logout',
+      backgroundColor: const Color(0xFFF5F7FA),
+      appBar: _buildAppBar(user),
+      body: _buildBody(),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(user) {
+    return AppBar(
+      backgroundColor: const Color(0xFF0D7377),
+      elevation: 0,
+      title: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: Colors.white,
+            child: Icon(Icons.person, color: AppTheme.primaryColor),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user?.fullName ?? 'User',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                user?.phoneNumber ?? '',
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ],
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppTheme.primaryVeryLight, AppTheme.backgroundColor],
-            stops: [0.0, 0.3],
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(51),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.settings, color: Colors.white),
+          ),
+          onPressed: _handleLogout,
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Promotional Banner
+          _buildPromoBanner(),
+          const SizedBox(height: 16),
+          // Search Bar
+          _buildSearchBar(),
+          const SizedBox(height: 24),
+          // Service Categories
+          _buildServiceGrid(),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromoBanner() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFD32F2F), Color(0xFFE57373)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD32F2F).withAlpha(77),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decorative circles
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(26),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -20,
+            bottom: -20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(26),
+              ),
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.local_offer_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Washroom Cleaning',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      '₹799/-',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white.withAlpha(204),
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'only at ₹599/-',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFEB3B),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Order Now',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(13),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: TextField(
+          decoration: InputDecoration(
+            hintText: 'Search your service here',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: MobileTheme.pagePadding,
+      ),
+    );
+  }
+
+  Widget _buildServiceGrid() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.1,
+        ),
+        itemCount: _services.length,
+        itemBuilder: (context, index) {
+          return _buildServiceCard(_services[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildServiceCard(ServiceCategory service) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(13),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            // TODO: Navigate to service details
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 24),
-                // Welcome Card
-                _buildWelcomeCard(user),
-                const SizedBox(height: 24),
-                // User Info Card
-                _buildUserInfoCard(user),
-                const SizedBox(height: 24),
-                // Coming Soon Card
-                _buildComingSoonCard(),
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: service.color.withAlpha(51),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(service.icon, size: 36, color: service.color),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  service.name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_circle, size: 16, color: Colors.green[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      service.count,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[600],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -116,153 +420,65 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  Widget _buildWelcomeCard(user) {
+  Widget _buildBottomNav() {
     return Container(
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: MobileTheme.primaryGradient,
-        borderRadius: MobileTheme.cardRadius,
-        boxShadow: MobileTheme.cardShadow,
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  Icons.person_rounded,
-                  size: 32,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome Back!',
-                      style: MobileTheme.labelLarge.copyWith(
-                        color: Colors.white.withAlpha(204),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user?.fullName ?? 'User',
-                      style: MobileTheme.headlineMedium.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      child: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onNavItemTapped,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF0D7377),
+        unselectedItemColor: Colors.grey,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        elevation: 0,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            activeIcon: Icon(Icons.favorite),
+            label: 'Favourite',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag_outlined),
+            activeIcon: Icon(Icons.shopping_bag),
+            label: 'My Orders',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.help_outline),
+            activeIcon: Icon(Icons.help),
+            label: 'Help',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildUserInfoCard(user) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: MobileTheme.cardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Profile Information', style: MobileTheme.headlineMedium),
-          const SizedBox(height: 20),
-          _buildInfoRow(Icons.person_outline, 'Name', user?.fullName ?? 'N/A'),
-          const Divider(height: 24),
-          _buildInfoRow(
-            Icons.phone_outlined,
-            'Phone',
-            user?.phoneNumber ?? 'N/A',
-          ),
-          const Divider(height: 24),
-          _buildInfoRow(
-            Icons.location_on_outlined,
-            'Address',
-            user?.address ?? 'N/A',
-          ),
-          const Divider(height: 24),
-          _buildInfoRow(Icons.wc_outlined, 'Gender', user?.gender ?? 'N/A'),
-          if (user?.dateOfBirth != null) ...[
-            const Divider(height: 24),
-            _buildInfoRow(
-              Icons.cake_outlined,
-              'Date of Birth',
-              '${user!.dateOfBirth!.day}/${user.dateOfBirth!.month}/${user.dateOfBirth!.year}',
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+class ServiceCategory {
+  final String name;
+  final IconData icon;
+  final String count;
+  final Color color;
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 24, color: AppTheme.primaryColor),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: MobileTheme.bodySmall.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: MobileTheme.bodyLarge.copyWith(
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildComingSoonCard() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: MobileTheme.cardDecoration,
-      child: Column(
-        children: [
-          Icon(
-            Icons.construction_rounded,
-            size: 64,
-            color: AppTheme.primaryColor,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'More Features Coming Soon!',
-            style: MobileTheme.headlineMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'We\'re working hard to bring you amazing features.',
-            style: MobileTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+  ServiceCategory(this.name, this.icon, this.count, this.color);
 }

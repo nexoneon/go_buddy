@@ -52,22 +52,29 @@ class AuthService extends ChangeNotifier {
       _phoneNumber = phoneNumber;
       notifyListeners();
 
+      debugPrint('📱 Sending OTP to: $phoneNumber');
+
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
           // Auto-verification (Android only)
+          debugPrint('✅ Auto-verification completed');
           _isLoading = false;
           notifyListeners();
           onVerificationCompleted(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
+          debugPrint('❌ Verification failed: ${e.code} - ${e.message}');
           _isLoading = false;
           _errorMessage = _getErrorMessage(e.code);
           notifyListeners();
-          onError(_errorMessage!);
+          onError('${_errorMessage!} (${e.code})');
         },
         codeSent: (String verificationId, int? resendToken) {
+          debugPrint(
+            '📨 OTP Code sent successfully! VerificationId: $verificationId',
+          );
           _verificationId = verificationId;
           _resendToken = resendToken;
           _isLoading = false;
@@ -75,6 +82,7 @@ class AuthService extends ChangeNotifier {
           onCodeSent(verificationId, resendToken);
         },
         codeAutoRetrievalTimeout: (String verificationId) {
+          debugPrint('⏰ Auto-retrieval timeout');
           _verificationId = verificationId;
           notifyListeners();
         },
@@ -83,8 +91,9 @@ class AuthService extends ChangeNotifier {
 
       return true;
     } catch (e) {
+      debugPrint('🔥 Exception in sendOTP: $e');
       _isLoading = false;
-      _errorMessage = 'Failed to send OTP. Please try again.';
+      _errorMessage = 'Failed to send OTP: ${e.toString()}';
       notifyListeners();
       onError(_errorMessage!);
       return false;

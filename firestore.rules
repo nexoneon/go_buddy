@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      // Allow users to read their own data
+      allow read: if isOwner(userId);
+      
+      // Allow users to create their own document
+      allow create: if isOwner(userId) 
+                    && request.resource.data.phone_number is string
+                    && request.resource.data.is_active == true
+                    && request.resource.data.is_staff == false
+                    && request.resource.data.is_superuser == false;
+      
+      // Allow users to update their own data
+      // But prevent them from changing security flags
+      allow update: if isOwner(userId)
+                    && request.resource.data.is_active == resource.data.is_active
+                    && request.resource.data.is_staff == resource.data.is_staff
+                    && request.resource.data.is_superuser == resource.data.is_superuser;
+      
+      // Allow users to delete their own account
+      allow delete: if isOwner(userId);
+    }
+    
+    // Admin users can read/write all documents
+    match /{document=**} {
+      allow read, write: if isAuthenticated() 
+                         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+  }
+}

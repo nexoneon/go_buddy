@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/config.dart';
 import '../../services/auth_service.dart';
+import '../../services/user_service.dart';
+import 'profile_screen.dart';
+import 'main_home_screen.dart';
 
 /// Mobile Login Screen
 ///
@@ -20,6 +23,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
   final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
 
   bool _isLoading = false;
   bool _showOtpField = false;
@@ -173,9 +177,62 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     _authService.resetVerification();
   }
 
-  void _navigateToHome() {
-    // TODO: Navigate to home screen
-    _showSnackBar('Login successful!', isSuccess: true);
+  Future<void> _navigateToHome() async {
+    final uid = _authService.currentUser?.uid;
+    final phoneNumber = _authService.userPhone;
+
+    if (uid == null || phoneNumber == null) {
+      _showSnackBar('Login failed. Please try again.', isSuccess: false);
+      return;
+    }
+
+    // Show loading
+    _showSnackBar('Login successful! Loading...', isSuccess: true);
+
+    // Check if user exists in Firestore
+    final userExists = await _userService.userExists(uid);
+
+    if (!userExists) {
+      // New user - create user in Firestore
+      await _userService.createUser(uid: uid, phoneNumber: phoneNumber);
+
+      // Navigate to Profile Screen
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MobileProfileScreen()),
+        );
+      }
+    } else {
+      // Existing user - get user data
+      final user = await _userService.getUser(uid);
+
+      // Update last login
+      await _userService.updateLastLogin(uid);
+
+      if (user == null) {
+        _showSnackBar('Failed to load user data', isSuccess: false);
+        return;
+      }
+
+      // Check if profile is complete
+      if (!user.isProfileComplete) {
+        // Navigate to Profile Screen to complete profile
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const MobileProfileScreen(),
+            ),
+          );
+        }
+      } else {
+        // Navigate to Main Home Screen
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MainHomeScreen()),
+          );
+        }
+      }
+    }
   }
 
   void _showSnackBar(String message, {required bool isSuccess}) {

@@ -9,6 +9,7 @@ import '../../models/service_model.dart';
 import 'login_screen.dart';
 import 'service_listing_screen.dart';
 import 'my_orders_screen.dart';
+import 'profile_screen.dart';
 
 /// Main Home Screen
 ///
@@ -97,8 +98,117 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: _buildAppBar(user),
-      body: _buildBody(),
+      body: _selectedIndex == 4 ? _buildSettingsPage() : _buildBody(),
       bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildSettingsPage() {
+    final user = _userService.currentUser;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Profile Card
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: const Color(0xFF0D7377).withAlpha(51),
+                    child: const Icon(
+                      Icons.person,
+                      size: 40,
+                      color: Color(0xFF0D7377),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user?.fullName ?? 'User',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user?.phoneNumber ?? '',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Settings Options
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 2,
+            child: Column(
+              children: [
+                // Profile Option
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D7377).withAlpha(26),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFF0D7377),
+                    ),
+                  ),
+                  title: const Text(
+                    'Profile',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: const Text('View and edit your profile'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MobileProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                // Logout Option
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withAlpha(26),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.logout, color: Colors.red),
+                  ),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red,
+                    ),
+                  ),
+                  subtitle: const Text('Sign out of your account'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: _handleLogout,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

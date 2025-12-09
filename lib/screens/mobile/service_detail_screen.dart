@@ -3,6 +3,7 @@ import '../../models/service_model.dart';
 import '../../models/order_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/order_service.dart';
+import '../../services/user_service.dart';
 import '../../config/config.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
@@ -17,14 +18,38 @@ class ServiceDetailScreen extends StatefulWidget {
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final AuthService _authService = AuthService();
   final OrderService _orderService = OrderService();
+  final UserService _userService = UserService();
 
-  void _showBookingDialog() {
+  void _showBookingDialog() async {
     final formKey = GlobalKey<FormState>();
     final addressController = TextEditingController();
     final dateController = TextEditingController();
     final timeController = TextEditingController();
     DateTime? selectedDate;
     bool isBooking = false;
+    bool isFormValid = false;
+
+    // Load user's address
+    final uid = _authService.currentUser?.uid;
+    if (uid != null) {
+      final user = await _userService.getUser(uid);
+      if (user?.address != null && user!.address!.isNotEmpty) {
+        addressController.text = user.address!;
+      }
+    }
+
+    // Function to check if all fields are valid
+    void checkFormValidity(StateSetter setDialogState) {
+      final valid =
+          addressController.text.isNotEmpty &&
+          dateController.text.isNotEmpty &&
+          timeController.text.isNotEmpty;
+      if (valid != isFormValid) {
+        setDialogState(() => isFormValid = valid);
+      }
+    }
+
+    if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
@@ -34,9 +59,17 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       ),
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
+          // Check initial form validity
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            checkFormValidity(setDialogState);
+          });
+
           return Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
+              bottom:
+                  MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom +
+                  16,
               left: 20,
               right: 20,
               top: 20,
@@ -61,6 +94,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
+                    onChanged: (_) => checkFormValidity(setDialogState),
                     validator: (v) =>
                         v?.isEmpty == true ? 'Address is required' : null,
                   ),
@@ -71,10 +105,17 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         child: TextFormField(
                           controller: dateController,
                           readOnly: true,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Date',
-                            prefixIcon: Icon(Icons.calendar_today),
-                            border: OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.calendar_today),
+                            border: const OutlineInputBorder(),
+                            suffixIcon: dateController.text.isNotEmpty
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 20,
+                                  )
+                                : null,
                           ),
                           onTap: () async {
                             final date = await showDatePicker(
@@ -89,6 +130,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                               selectedDate = date;
                               dateController.text =
                                   '${date.day}/${date.month}/${date.year}';
+                              checkFormValidity(setDialogState);
                             }
                           },
                           validator: (v) =>
@@ -100,10 +142,17 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         child: TextFormField(
                           controller: timeController,
                           readOnly: true,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Time',
-                            prefixIcon: Icon(Icons.access_time),
-                            border: OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.access_time),
+                            border: const OutlineInputBorder(),
+                            suffixIcon: timeController.text.isNotEmpty
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 20,
+                                  )
+                                : null,
                           ),
                           onTap: () async {
                             final time = await showTimePicker(
@@ -112,6 +161,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             );
                             if (time != null) {
                               timeController.text = time.format(context);
+                              checkFormValidity(setDialogState);
                             }
                           },
                           validator: (v) =>
@@ -124,7 +174,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: isBooking
+                      onPressed: (isBooking || !isFormValid)
                           ? null
                           : () async {
                               if (formKey.currentState!.validate()) {
@@ -192,7 +242,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: isFormValid
+                            ? AppTheme.primaryColor
+                            : Colors.grey[400],
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -207,9 +259,11 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Confirm Booking',
-                              style: TextStyle(
+                          : Text(
+                              isFormValid
+                                  ? 'Confirm Booking'
+                                  : 'Fill all fields to book',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,

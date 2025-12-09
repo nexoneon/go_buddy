@@ -24,7 +24,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     final dateController = TextEditingController();
     final timeController = TextEditingController();
     DateTime? selectedDate;
-    TimeOfDay? selectedTime;
     bool isBooking = false;
 
     showModalBottomSheet(
@@ -112,7 +111,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                               initialTime: TimeOfDay.now(),
                             );
                             if (time != null) {
-                              selectedTime = time;
                               timeController.text = time.format(context);
                             }
                           },

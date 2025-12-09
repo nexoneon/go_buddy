@@ -643,31 +643,28 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           color: Colors.white,
           width: double.infinity,
-          child: Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 16,
-            runSpacing: 16,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Categories',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
                 onPressed: () => _showAddEditCategoryDialog(),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Category'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
+                    horizontal: 16,
+                    vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
@@ -697,14 +694,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 );
               }
 
-              return GridView.builder(
-                padding: const EdgeInsets.all(24),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 300,
-                  mainAxisExtent: 220,
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 24,
-                ),
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   return _buildCategoryCard(categories[index]);
@@ -718,78 +709,84 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   }
 
   Widget _buildCategoryCard(CategoryModel category) {
-    // Try to parse icon hex/code
-    // IconData iconData = Icons.category; // Unused
-    // For simplicity we might just use a standard icon if we can't parse,
-    // or let the user pick from a set.
-    // Here we'll just use a circle with the color.
-
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      clipBehavior: Clip.antiAlias,
-      shadowColor: Colors.black.withAlpha(26),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Color(category.color).withAlpha(51),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.category, // Replace with dynamic icon later
-              size: 32,
-              color: Color(category.color),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            category.name,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: category.isActive
-                  ? Colors.green.withAlpha(26)
-                  : Colors.red.withAlpha(26),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              category.isActive ? 'Active' : 'Inactive',
-              style: TextStyle(
-                color: category.isActive ? Colors.green : Colors.red,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // Category Icon
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Color(category.color).withAlpha(51),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.category,
+                size: 24,
+                color: Color(category.color),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                onPressed: () => _showAddEditCategoryDialog(category: category),
-                icon: const Icon(Icons.edit, size: 20),
-                color: Colors.blue,
-                tooltip: 'Edit',
+            const SizedBox(width: 12),
+            // Category Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    category.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: category.isActive
+                          ? Colors.green.withAlpha(26)
+                          : Colors.red.withAlpha(26),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      category.isActive ? 'Active' : 'Inactive',
+                      style: TextStyle(
+                        color: category.isActive ? Colors.green : Colors.red,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              IconButton(
-                onPressed: () => _deleteCategory(category.id),
-                icon: const Icon(Icons.delete_outline, size: 20),
-                color: Colors.red,
-                tooltip: 'Delete',
-              ),
-            ],
-          ),
-        ],
+            ),
+            // Actions
+            IconButton(
+              onPressed: () => _showAddEditCategoryDialog(category: category),
+              icon: const Icon(Icons.edit, size: 18),
+              color: Colors.blue,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => _deleteCategory(category.id),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              color: Colors.red,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1051,31 +1048,28 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           color: Colors.white,
           width: double.infinity,
-          child: Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 16,
-            runSpacing: 16,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Services',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
                 onPressed: () => _showAddEditServiceDialog(),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Service'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
+                    horizontal: 16,
+                    vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
@@ -1107,14 +1101,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 );
               }
 
-              return GridView.builder(
-                padding: const EdgeInsets.all(24),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 300,
-                  mainAxisExtent: 340, // Fixed height for consistency
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 24,
-                ),
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
                 itemCount: docs.length,
                 itemBuilder: (context, index) {
                   final service = ServiceModel.fromFirestore(docs[index]);
@@ -1130,169 +1118,126 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
   Widget _buildServiceCard(ServiceModel service) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      clipBehavior: Clip.antiAlias,
-      shadowColor: Colors.black.withValues(alpha: 0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          SizedBox(
-            height: 160,
-            width: double.infinity,
-            child: Container(
-              color: Colors.grey[100],
-              child: service.imageUrl.isNotEmpty
-                  ? Image.network(
-                      service.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.broken_image, color: Colors.grey),
-                        );
-                      },
-                    )
-                  : const Center(
-                      child: Icon(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // Service Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: 60,
+                height: 60,
+                color: Colors.grey[100],
+                child: service.imageUrl.isNotEmpty
+                    ? Image.network(
+                        service.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                            size: 24,
+                          );
+                        },
+                      )
+                    : const Icon(
                         Icons.image_not_supported_outlined,
-                        size: 40,
+                        size: 24,
                         color: Colors.grey,
                       ),
-                    ),
+              ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+            const SizedBox(width: 12),
+            // Service Info
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              service.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      Expanded(
+                        child: Text(
+                          service.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
                           ),
-                          if (service.isFavourite)
-                            const Padding(
-                              padding: EdgeInsets.only(left: 8),
-                              child: Icon(
-                                Icons.favorite,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                            ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      const SizedBox(height: 4),
+                      if (service.isFavourite)
+                        const Icon(Icons.favorite, color: Colors.red, size: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 6,
+                          vertical: 2,
                         ),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           service.type,
                           style: TextStyle(
                             color: AppTheme.primaryColor,
-                            fontSize: 12,
+                            fontSize: 10,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '₹${service.price.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 14,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${service.orderCount}',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      Text(
+                        '₹${service.price.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () =>
-                                  _showAddEditServiceDialog(service: service),
-                              icon: const Icon(Icons.edit, size: 16),
-                              label: const Text('Edit'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                side: BorderSide(color: Colors.grey[300]!),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: () => _deleteService(service.id),
-                            icon: const Icon(Icons.delete_outline),
-                            color: Colors.red[400],
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.red[50],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 12,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${service.orderCount}',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            // Actions
+            IconButton(
+              onPressed: () => _showAddEditServiceDialog(service: service),
+              icon: const Icon(Icons.edit, size: 18),
+              color: Colors.blue,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => _deleteService(service.id),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              color: Colors.red[400],
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
       ),
     );
   }

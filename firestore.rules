@@ -47,6 +47,15 @@ service cloud.firestore {
       // Allow any authenticated user to read categories
       allow read: if isAuthenticated();
     }
+
+    // Orders collection rules
+    match /orders/{orderId} {
+      // Allow users to create orders
+      allow create: if isAuthenticated();
+      // Allow users to read their own orders
+      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      // Allow users to update their own orders (e.g. cancel) - optional for now
+    }
     
     // Admin users can read/write all documents
     match /{document=**} {

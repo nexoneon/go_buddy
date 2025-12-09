@@ -1,14 +1,239 @@
 import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
+import '../../models/order_model.dart';
+import '../../services/auth_service.dart';
+import '../../services/order_service.dart';
 import '../../config/config.dart';
 
-class ServiceDetailScreen extends StatelessWidget {
+class ServiceDetailScreen extends StatefulWidget {
   final ServiceModel service;
 
   const ServiceDetailScreen({super.key, required this.service});
 
   @override
+  State<ServiceDetailScreen> createState() => _ServiceDetailScreenState();
+}
+
+class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
+  final AuthService _authService = AuthService();
+  final OrderService _orderService = OrderService();
+
+  void _showBookingDialog() {
+    final formKey = GlobalKey<FormState>();
+    final addressController = TextEditingController();
+    final dateController = TextEditingController();
+    final timeController = TextEditingController();
+    DateTime? selectedDate;
+    TimeOfDay? selectedTime;
+    bool isBooking = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Book Service',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: addressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Address',
+                      hintText: 'Enter your address',
+                      prefixIcon: Icon(Icons.location_on_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                    validator: (v) =>
+                        v?.isEmpty == true ? 'Address is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: dateController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Date',
+                            prefixIcon: Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(),
+                          ),
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 30),
+                              ),
+                            );
+                            if (date != null) {
+                              selectedDate = date;
+                              dateController.text =
+                                  '${date.day}/${date.month}/${date.year}';
+                            }
+                          },
+                          validator: (v) =>
+                              v?.isEmpty == true ? 'Date is required' : null,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: timeController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Time',
+                            prefixIcon: Icon(Icons.access_time),
+                            border: OutlineInputBorder(),
+                          ),
+                          onTap: () async {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                            if (time != null) {
+                              selectedTime = time;
+                              timeController.text = time.format(context);
+                            }
+                          },
+                          validator: (v) =>
+                              v?.isEmpty == true ? 'Time is required' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isBooking
+                          ? null
+                          : () async {
+                              if (formKey.currentState!.validate()) {
+                                setDialogState(() => isBooking = true);
+                                try {
+                                  final user = _authService.currentUser;
+
+                                  if (user == null) {
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Please login to book'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  final order = OrderModel(
+                                    id: '', // Auto-generated
+                                    userId: user.uid,
+                                    serviceId: widget.service.id,
+                                    serviceName: widget.service.name,
+                                    serviceImageUrl: widget.service.imageUrl,
+                                    amount: widget.service.price,
+                                    status: 'pending',
+                                    bookingDate: selectedDate!,
+                                    bookingTime: timeController.text,
+                                    address: addressController.text,
+                                    userPhone: user.phoneNumber ?? '',
+                                    createdAt: DateTime.now(),
+                                  );
+
+                                  await _orderService.createOrder(order);
+
+                                  if (context.mounted) {
+                                    Navigator.pop(context); // Close sheet
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Order placed successfully!',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (context.mounted) {
+                                    setDialogState(() => isBooking = false);
+                                  }
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isBooking
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Confirm Booking',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Shorthand for service
+    final service = widget.service;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -94,7 +319,7 @@ class ServiceDetailScreen extends StatelessWidget {
                   const Text(
                     'Professional service with high quality standards. Book now to experience the best service in town.',
                     style: TextStyle(color: Colors.grey, height: 1.5),
-                  ), // TODO: Add description to ServiceModel
+                  ),
                   const SizedBox(height: 24),
                   const Divider(),
                   ListTile(
@@ -129,40 +354,52 @@ class ServiceDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+      bottomNavigationBar: StreamBuilder<bool>(
+        stream: _authService.currentUser != null
+            ? _orderService.hasUserBookedService(
+                _authService.currentUser!.uid,
+                service.id,
+              )
+            : Stream.value(false),
+        builder: (context, snapshot) {
+          final hasBooked = snapshot.data ?? false;
+
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: SafeArea(
-          child: ElevatedButton(
-            onPressed: () {
-              // TODO: Implement Booking Flow
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            child: SafeArea(
+              child: ElevatedButton(
+                onPressed: hasBooked ? null : _showBookingDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: hasBooked
+                      ? Colors.grey
+                      : AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  hasBooked ? 'Already Booked' : 'Book Now',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
-            child: const Text(
-              'Book Now',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

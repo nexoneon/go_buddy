@@ -8,6 +8,7 @@ import '../../models/category_model.dart';
 import '../../models/service_model.dart';
 import 'login_screen.dart';
 import 'service_listing_screen.dart';
+import 'my_orders_screen.dart';
 
 /// Main Home Screen
 ///
@@ -78,7 +79,13 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   void _onNavItemTapped(int index) {
     setState(() => _selectedIndex = index);
-    // TODO: Navigate to respective screens
+    // Navigate to My Orders when index is 1
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => MyOrdersScreen()),
+      );
+    }
   }
 
   @override

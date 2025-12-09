@@ -11,6 +11,7 @@ import '../../services/user_service.dart';
 import '../../models/service_model.dart';
 import '../../models/user_model.dart';
 import '../../models/category_model.dart';
+import '../../models/order_model.dart';
 import '../../services/category_service.dart';
 import 'web_admin_login.dart';
 
@@ -315,34 +316,171 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.5,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildStatCard(
-                'Total Services',
-                '0',
-                Icons.inventory_2,
-                Colors.blue,
-              ), // TODO: Real count
-              _buildStatCard(
-                'Total Orders',
-                '0',
-                Icons.shopping_cart,
-                Colors.green,
-              ), // TODO: Real count
-              _buildStatCard('Total Users', '0', Icons.people, Colors.orange),
-              _buildStatCard(
-                'Revenue',
-                '₹0',
-                Icons.currency_rupee,
-                Colors.purple,
-              ),
-            ],
+          // Stats Cards with real data
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('services')
+                .snapshots(),
+            builder: (context, servicesSnapshot) {
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('orders')
+                    .snapshots(),
+                builder: (context, ordersSnapshot) {
+                  return StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .snapshots(),
+                    builder: (context, usersSnapshot) {
+                      final servicesCount =
+                          servicesSnapshot.data?.docs.length ?? 0;
+                      final ordersCount = ordersSnapshot.data?.docs.length ?? 0;
+                      final usersCount = usersSnapshot.data?.docs.length ?? 0;
+
+                      // Calculate total revenue
+                      double totalRevenue = 0;
+                      if (ordersSnapshot.hasData) {
+                        for (var doc in ordersSnapshot.data!.docs) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final status = data['status'] ?? '';
+                          if (status == 'completed') {
+                            totalRevenue += (data['amount'] ?? 0).toDouble();
+                          }
+                        }
+                      }
+
+                      return GridView.count(
+                        crossAxisCount: 4,
+                        shrinkWrap: true,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.5,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildStatCard(
+                            'Total Services',
+                            '$servicesCount',
+                            Icons.inventory_2,
+                            Colors.blue,
+                          ),
+                          _buildStatCard(
+                            'Total Orders',
+                            '$ordersCount',
+                            Icons.shopping_cart,
+                            Colors.green,
+                          ),
+                          _buildStatCard(
+                            'Total Users',
+                            '$usersCount',
+                            Icons.people,
+                            Colors.orange,
+                          ),
+                          _buildStatCard(
+                            'Revenue',
+                            '₹${totalRevenue.toStringAsFixed(0)}',
+                            Icons.currency_rupee,
+                            Colors.purple,
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          // Recent Orders Section
+          const Text(
+            'Recent Orders',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('orders')
+                .orderBy('created_at', descending: true)
+                .limit(5)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'No recent orders',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.docs.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final order =
+                        snapshot.data!.docs[index].data()
+                            as Map<String, dynamic>;
+                    final status = OrderStatus.fromString(
+                      order['status'] ?? 'pending',
+                    );
+
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _getStatusColor(
+                          status,
+                        ).withValues(alpha: 0.1),
+                        child: Icon(
+                          Icons.shopping_bag,
+                          color: _getStatusColor(status),
+                        ),
+                      ),
+                      title: Text(
+                        order['service_name'] ?? 'Unknown',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(order['user_phone'] ?? ''),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(status).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          status.displayName,
+                          style: TextStyle(
+                            color: _getStatusColor(status),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -698,13 +836,96 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   }
 
   Future<void> _deleteCategory(String id) async {
+    // First check if any services use this category
+    final servicesSnapshot = await FirebaseFirestore.instance
+        .collection('services')
+        .where('category_id', isEqualTo: id)
+        .get();
+
+    if (servicesSnapshot.docs.isNotEmpty) {
+      // Category has services assigned - show warning
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 28,
+                ),
+                SizedBox(width: 12),
+                Text('Cannot Delete'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'This category is assigned to ${servicesSnapshot.docs.length} service(s):',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: servicesSnapshot.docs.map((doc) {
+                        final data = doc.data();
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.circle,
+                                size: 8,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  data['name'] ?? 'Unknown Service',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Please reassign or delete these services before deleting the category.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    // No services assigned - proceed with delete confirmation
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Category'),
-        content: const Text(
-          'Are you sure? This will not delete associated services.',
-        ),
+        content: const Text('Are you sure you want to delete this category?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -721,6 +942,14 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
     if (confirm == true) {
       await _categoryService.deleteCategory(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Category deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -1412,19 +1641,144 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 padding: const EdgeInsets.all(24),
                 itemCount: orders.length,
                 itemBuilder: (context, index) {
-                  final order = orders[index].data() as Map<String, dynamic>;
+                  final orderDoc = orders[index];
+                  final order = orderDoc.data() as Map<String, dynamic>;
+                  final currentStatus = OrderStatus.fromString(
+                    order['status'] ?? 'pending',
+                  );
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppTheme.primaryColor,
-                        child: Text('${index + 1}'),
-                      ),
-                      title: Text(order['service_name'] ?? 'Unknown Service'),
-                      subtitle: Text(order['user_phone'] ?? 'No phone'),
-                      trailing: Text(
-                        order['status'] ?? 'Pending',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          // Order Number
+                          CircleAvatar(
+                            backgroundColor: AppTheme.primaryColor,
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Service Info
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  order['service_name'] ?? 'Unknown Service',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '₹${order['amount']?.toStringAsFixed(0) ?? '0'}',
+                                  style: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Customer Info
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.phone,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(order['user_phone'] ?? 'No phone'),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_today,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(order['booking_time'] ?? ''),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Status Dropdown
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(
+                                currentStatus,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _getStatusColor(currentStatus),
+                              ),
+                            ),
+                            child: DropdownButton<OrderStatus>(
+                              value: currentStatus,
+                              underline: const SizedBox(),
+                              icon: Icon(
+                                Icons.arrow_drop_down,
+                                color: _getStatusColor(currentStatus),
+                              ),
+                              items: OrderStatus.values.map((status) {
+                                return DropdownMenuItem(
+                                  value: status,
+                                  child: Text(
+                                    status.displayName,
+                                    style: TextStyle(
+                                      color: _getStatusColor(status),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (newStatus) async {
+                                if (newStatus != null &&
+                                    newStatus != currentStatus) {
+                                  await FirebaseFirestore.instance
+                                      .collection('orders')
+                                      .doc(orderDoc.id)
+                                      .update({'status': newStatus.value});
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Order status updated to ${newStatus.displayName}',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -1435,6 +1789,23 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         ),
       ],
     );
+  }
+
+  Color _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Colors.orange;
+      case OrderStatus.accepted:
+        return Colors.blue;
+      case OrderStatus.inProgress:
+        return Colors.purple;
+      case OrderStatus.hold:
+        return Colors.amber;
+      case OrderStatus.completed:
+        return Colors.green;
+      case OrderStatus.cancelled:
+        return Colors.red;
+    }
   }
 
   Widget _buildUsers() {

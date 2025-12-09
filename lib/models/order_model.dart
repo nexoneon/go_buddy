@@ -1,5 +1,66 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Order status types
+enum OrderStatus {
+  pending,
+  accepted,
+  inProgress,
+  hold,
+  completed,
+  cancelled;
+
+  String get displayName {
+    switch (this) {
+      case OrderStatus.pending:
+        return 'Pending';
+      case OrderStatus.accepted:
+        return 'Accepted';
+      case OrderStatus.inProgress:
+        return 'In Progress';
+      case OrderStatus.hold:
+        return 'On Hold';
+      case OrderStatus.completed:
+        return 'Completed';
+      case OrderStatus.cancelled:
+        return 'Cancelled';
+    }
+  }
+
+  String get value {
+    switch (this) {
+      case OrderStatus.pending:
+        return 'pending';
+      case OrderStatus.accepted:
+        return 'accepted';
+      case OrderStatus.inProgress:
+        return 'in_progress';
+      case OrderStatus.hold:
+        return 'hold';
+      case OrderStatus.completed:
+        return 'completed';
+      case OrderStatus.cancelled:
+        return 'cancelled';
+    }
+  }
+
+  static OrderStatus fromString(String status) {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return OrderStatus.accepted;
+      case 'in_progress':
+        return OrderStatus.inProgress;
+      case 'hold':
+        return OrderStatus.hold;
+      case 'completed':
+        return OrderStatus.completed;
+      case 'cancelled':
+        return OrderStatus.cancelled;
+      default:
+        return OrderStatus.pending;
+    }
+  }
+}
+
 class OrderModel {
   final String id;
   final String userId;

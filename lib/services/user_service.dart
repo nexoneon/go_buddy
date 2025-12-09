@@ -58,6 +58,26 @@ class UserService extends ChangeNotifier {
     }
   }
 
+  /// Get user by phone number (for admin verification before OTP)
+  Future<UserModel?> getUserByPhone(String phoneNumber) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collection)
+          .where('phone_number', isEqualTo: phoneNumber)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return null;
+      }
+
+      return UserModel.fromFirestore(querySnapshot.docs.first);
+    } catch (e) {
+      debugPrint('❌ Error getting user by phone: $e');
+      return null;
+    }
+  }
+
   /// Create new user in Firestore
   Future<UserModel?> createUser({
     required String uid,

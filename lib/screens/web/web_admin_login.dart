@@ -45,6 +45,27 @@ class _WebAdminLoginScreenState extends State<WebAdminLoginScreen> {
         _errorMessage = null;
       });
 
+      // FIRST: Check if user exists and is admin BEFORE sending OTP
+      final adminUser = await _userService.getUserByPhone(_fullPhoneNumber);
+
+      if (adminUser == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No admin account found with this phone number';
+        });
+        return;
+      }
+
+      if (!adminUser.isSuperuser) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              'Access denied. This portal is for administrators only.';
+        });
+        return;
+      }
+
+      // User is admin, proceed with sending OTP
       await _authService.sendOTP(
         phoneNumber: _fullPhoneNumber,
         onCodeSent: (verificationId, resendToken) {

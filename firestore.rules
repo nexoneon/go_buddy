@@ -34,6 +34,10 @@ service cloud.firestore {
       
       // Allow users to delete their own account
       allow delete: if isOwner(userId);
+      
+      // Allow listing/querying users collection for admin login verification
+      // This allows checking phone_number and is_superuser before OTP
+      allow list: if true;
     }
 
     // Services collection rules

@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import '../../config/config.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
+import '../../services/category_service.dart';
+import '../../services/service_service.dart';
+import '../../models/category_model.dart';
+import '../../models/service_model.dart';
 import 'login_screen.dart';
+import 'service_listing_screen.dart';
 
 /// Main Home Screen
 ///
@@ -17,41 +22,9 @@ class MainHomeScreen extends StatefulWidget {
 class _MainHomeScreenState extends State<MainHomeScreen> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  final CategoryService _categoryService = CategoryService();
+  final ServiceService _serviceService = ServiceService();
   int _selectedIndex = 2; // Home is selected by default
-
-  final List<ServiceCategory> _services = [
-    ServiceCategory(
-      'AC Technician',
-      Icons.ac_unit,
-      '192',
-      const Color(0xFF4FC3F7),
-    ),
-    ServiceCategory(
-      'Cleaning Services',
-      Icons.cleaning_services,
-      '155',
-      const Color(0xFFFFB74D),
-    ),
-    ServiceCategory(
-      'Appliance Repair',
-      Icons.build,
-      '174',
-      const Color(0xFF81C784),
-    ),
-    ServiceCategory(
-      'Beauty Services',
-      Icons.face,
-      '94',
-      const Color(0xFFE57373),
-    ),
-    ServiceCategory(
-      'Electrician',
-      Icons.electrical_services,
-      '102',
-      const Color(0xFFFFD54F),
-    ),
-    ServiceCategory('Plumbers', Icons.plumbing, '106', const Color(0xFF64B5F6)),
-  ];
 
   @override
   void initState() {
@@ -178,7 +151,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           _buildSearchBar(),
           const SizedBox(height: 24),
           // Service Categories
-          _buildServiceGrid(),
+          _buildCategoryGrid(),
           const SizedBox(height: 24),
         ],
       ),
@@ -332,27 +305,63 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  Widget _buildServiceGrid() {
+  Widget _buildCategoryGrid() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.1,
-        ),
-        itemCount: _services.length,
-        itemBuilder: (context, index) {
-          return _buildServiceCard(_services[index]);
+      child: StreamBuilder<List<ServiceModel>>(
+        stream: _serviceService.getServices(),
+        builder: (context, serviceSnapshot) {
+          // We don't block the UI if services are loading, we just show 0 count
+          final services = serviceSnapshot.data ?? [];
+
+          return StreamBuilder<List<CategoryModel>>(
+            stream: _categoryService.getCategories(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error loading categories'));
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final categories = snapshot.data ?? [];
+
+              if (categories.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No categories available'),
+                  ),
+                );
+              }
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.8, // Adjusted for extra text
+                ),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final serviceCount = services
+                      .where((s) => s.categoryId == category.id)
+                      .length;
+                  return _buildCategoryCard(category, serviceCount);
+                },
+              );
+            },
+          );
         },
       ),
     );
   }
 
-  Widget _buildServiceCard(ServiceCategory service) {
+  Widget _buildCategoryCard(CategoryModel category, int count) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -370,47 +379,54 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            // TODO: Navigate to service details
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ServiceListingScreen(
+                  categoryId: category.id,
+                  categoryName: category.name,
+                ),
+              ),
+            );
           },
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 70,
-                  height: 70,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
-                    color: service.color.withAlpha(51),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Color(category.color).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(service.icon, size: 36, color: service.color),
+                  child: Icon(
+                    Icons.category_outlined, // Dynamic icon later
+                    color: Color(category.color),
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  service.name,
+                  category.name,
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF2C3E50),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add_circle, size: 16, color: Colors.green[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      service.count,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green[600],
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  '$count Services',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -484,11 +500,4 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 }
 
-class ServiceCategory {
-  final String name;
-  final IconData icon;
-  final String count;
-  final Color color;
-
-  ServiceCategory(this.name, this.icon, this.count, this.color);
-}
+// ServiceCategory class removed as it is replaced by ServiceModel

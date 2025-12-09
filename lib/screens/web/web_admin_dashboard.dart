@@ -10,6 +10,8 @@ import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../../models/service_model.dart';
 import '../../models/user_model.dart';
+import '../../models/category_model.dart';
+import '../../services/category_service.dart';
 import 'web_admin_login.dart';
 
 /// Web Admin Dashboard
@@ -25,10 +27,12 @@ class WebAdminDashboard extends StatefulWidget {
 class _WebAdminDashboardState extends State<WebAdminDashboard> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  final CategoryService _categoryService = CategoryService();
   int _selectedIndex = 0;
 
   final List<String> _menuItems = [
     'Dashboard',
+    'Categories',
     'Services',
     'Orders',
     'Users',
@@ -267,12 +271,14 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       case 0:
         return Icons.dashboard;
       case 1:
-        return Icons.inventory_2; // Services
+        return Icons.category; // Categories
       case 2:
-        return Icons.shopping_cart;
+        return Icons.inventory_2; // Services
       case 3:
-        return Icons.people;
+        return Icons.shopping_cart;
       case 4:
+        return Icons.people;
+      case 5:
         return Icons.settings;
       default:
         return Icons.dashboard;
@@ -284,12 +290,14 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       case 0:
         return _buildDashboard();
       case 1:
-        return _buildServices();
+        return _buildCategories();
       case 2:
-        return _buildOrders();
+        return _buildServices();
       case 3:
-        return _buildUsers();
+        return _buildOrders();
       case 4:
+        return _buildUsers();
+      case 5:
         return _buildSettings();
       default:
         return _buildDashboard();
@@ -397,6 +405,323 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         ],
       ),
     );
+  }
+
+  // --- Categories Management Section ---
+
+  Widget _buildCategories() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          color: Colors.white,
+          width: double.infinity,
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              const Text(
+                'Categories',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => _showAddEditCategoryDialog(),
+                icon: const Icon(Icons.add),
+                label: const Text('Add Category'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<List<CategoryModel>>(
+            stream: _categoryService.getAllCategories(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final categories = snapshot.data ?? [];
+
+              if (categories.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No categories found. Add one!',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                );
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(24),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 300,
+                  mainAxisExtent: 220,
+                  crossAxisSpacing: 24,
+                  mainAxisSpacing: 24,
+                ),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  return _buildCategoryCard(categories[index]);
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryCard(CategoryModel category) {
+    // Try to parse icon hex/code
+    // IconData iconData = Icons.category; // Unused
+    // For simplicity we might just use a standard icon if we can't parse,
+    // or let the user pick from a set.
+    // Here we'll just use a circle with the color.
+
+    return Card(
+      elevation: 2,
+      clipBehavior: Clip.antiAlias,
+      shadowColor: Colors.black.withAlpha(26),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Color(category.color).withAlpha(51),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.category, // Replace with dynamic icon later
+              size: 32,
+              color: Color(category.color),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            category.name,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: category.isActive
+                  ? Colors.green.withAlpha(26)
+                  : Colors.red.withAlpha(26),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              category.isActive ? 'Active' : 'Inactive',
+              style: TextStyle(
+                color: category.isActive ? Colors.green : Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: () => _showAddEditCategoryDialog(category: category),
+                icon: const Icon(Icons.edit, size: 20),
+                color: Colors.blue,
+                tooltip: 'Edit',
+              ),
+              IconButton(
+                onPressed: () => _deleteCategory(category.id),
+                icon: const Icon(Icons.delete_outline, size: 20),
+                color: Colors.red,
+                tooltip: 'Delete',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddEditCategoryDialog({CategoryModel? category}) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController(text: category?.name ?? '');
+    // Simple color picker workaround: just inputs for now or preset
+    Color selectedColor = category != null
+        ? Color(category.color)
+        : Colors.blue;
+    bool isActive = category?.isActive ?? true;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(category == null ? 'Add Category' : 'Edit Category'),
+            content: SizedBox(
+              width: 400,
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Category Name',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) =>
+                          v?.isEmpty == true ? 'Name is required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    // Color Picker (Simplified)
+                    Row(
+                      children: [
+                        const Text('Color: '),
+                        const SizedBox(width: 8),
+                        ...[
+                          Colors.blue,
+                          Colors.red,
+                          Colors.green,
+                          Colors.orange,
+                          Colors.purple,
+                          Colors.teal,
+                        ].map((c) {
+                          return GestureDetector(
+                            onTap: () => setState(() => selectedColor = c),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: c,
+                                shape: BoxShape.circle,
+                                border: selectedColor == c
+                                    ? Border.all(color: Colors.black, width: 2)
+                                    : null,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text('Active'),
+                      value: isActive,
+                      onChanged: (val) => setState(() => isActive = val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.pop(
+                      context,
+                    ); // Close dialog first? Or valid logic
+
+                    final newCategory = CategoryModel(
+                      id: category?.id ?? '', // ID handled by firestore for add
+                      name: nameController.text.trim(),
+                      iconCode: '', // Default for now
+                      color: selectedColor.value,
+                      isActive: isActive,
+                    );
+
+                    try {
+                      if (category == null) {
+                        await _categoryService.addCategory(newCategory);
+                      } else {
+                        await _categoryService.updateCategory(newCategory);
+                      }
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              category == null
+                                  ? 'Category added successfully'
+                                  : 'Category updated successfully',
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _deleteCategory(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Category'),
+        content: const Text(
+          'Are you sure? This will not delete associated services.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _categoryService.deleteCategory(id);
+    }
   }
 
   // --- Services Management Section ---
@@ -665,6 +990,9 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       text: service?.orderCount.toString() ?? '0',
     );
     bool isFavourite = service?.isFavourite ?? false;
+    String? selectedCategoryId = service?.categoryId.isNotEmpty == true
+        ? service!.categoryId
+        : null;
     // Uint8List? webImage;
     bool isUploading = false;
 
@@ -809,10 +1137,51 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                             v?.isEmpty == true ? 'Price is required' : null,
                       ),
                       const SizedBox(height: 16),
+                      // Category Dropdown
+                      StreamBuilder<List<CategoryModel>>(
+                        stream: _categoryService.getAllCategories(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: LinearProgressIndicator(),
+                            );
+                          }
+                          final categories = snapshot.data!;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: DropdownButtonFormField<String>(
+                              value:
+                                  categories.any(
+                                    (c) => c.id == selectedCategoryId,
+                                  )
+                                  ? selectedCategoryId
+                                  : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Category',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: categories.map((category) {
+                                return DropdownMenuItem(
+                                  value: category.id,
+                                  child: Text(category.name),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedCategoryId = val;
+                                });
+                              },
+                              validator: (v) =>
+                                  v == null ? 'Category is required' : null,
+                            ),
+                          );
+                        },
+                      ),
                       TextFormField(
                         controller: typeController,
                         decoration: const InputDecoration(
-                          labelText: 'Type/Category',
+                          labelText: 'Service Type (Tag)',
                           hintText: 'e.g. Cleaning',
                           border: OutlineInputBorder(),
                         ),
@@ -896,6 +1265,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                             imageUrl: imageUrl,
                             price: double.parse(priceController.text.trim()),
                             type: typeController.text.trim(),
+                            categoryId: selectedCategoryId ?? '',
                             orderCount: int.parse(
                               orderCountController.text.trim(),
                             ),

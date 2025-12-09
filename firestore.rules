@@ -35,6 +35,18 @@ service cloud.firestore {
       // Allow users to delete their own account
       allow delete: if isOwner(userId);
     }
+
+    // Services collection rules
+    match /services/{serviceId} {
+      // Allow any authenticated user to read services
+      allow read: if isAuthenticated();
+    }
+
+    // Categories collection rules
+    match /categories/{categoryId} {
+      // Allow any authenticated user to read categories
+      allow read: if isAuthenticated();
+    }
     
     // Admin users can read/write all documents
     match /{document=**} {

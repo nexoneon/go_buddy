@@ -6,6 +6,7 @@ class ServiceModel {
   final String imageUrl;
   final double price;
   final String type;
+  final String categoryId;
   final bool isFavourite;
   final int orderCount;
   final bool isActive;
@@ -16,6 +17,7 @@ class ServiceModel {
     required this.imageUrl,
     required this.price,
     required this.type,
+    this.categoryId = '',
     this.isFavourite = false,
     this.orderCount = 0,
     this.isActive = true,
@@ -29,6 +31,7 @@ class ServiceModel {
       imageUrl: data['image_url'] ?? '',
       price: (data['price'] ?? 0.0).toDouble(),
       type: data['type'] ?? '',
+      categoryId: data['category_id'] ?? '',
       isFavourite: data['is_favourite'] ?? false,
       orderCount: data['order_count'] ?? 0,
       isActive: data['is_active'] ?? true,
@@ -41,6 +44,7 @@ class ServiceModel {
       'image_url': imageUrl,
       'price': price,
       'type': type,
+      'category_id': categoryId,
       'is_favourite': isFavourite,
       'order_count': orderCount,
       'is_active': isActive,
@@ -53,6 +57,7 @@ class ServiceModel {
     String? imageUrl,
     double? price,
     String? type,
+    String? categoryId,
     bool? isFavourite,
     int? orderCount,
     bool? isActive,
@@ -63,6 +68,7 @@ class ServiceModel {
       imageUrl: imageUrl ?? this.imageUrl,
       price: price ?? this.price,
       type: type ?? this.type,
+      categoryId: categoryId ?? this.categoryId,
       isFavourite: isFavourite ?? this.isFavourite,
       orderCount: orderCount ?? this.orderCount,
       isActive: isActive ?? this.isActive,

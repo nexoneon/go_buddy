@@ -253,6 +253,7 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
           // Gender Dropdown
           DropdownButtonFormField<String>(
             value: _selectedGender,
+            isExpanded: true,
             decoration: MobileTheme.inputDecoration(
               labelText: 'Gender',
               prefixIcon: const Icon(Icons.wc_outlined, size: 22),
@@ -260,7 +261,7 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
             items: _genders.map((String gender) {
               return DropdownMenuItem<String>(
                 value: gender,
-                child: Text(gender),
+                child: Text(gender, overflow: TextOverflow.ellipsis),
               );
             }).toList(),
             onChanged: (String? value) {

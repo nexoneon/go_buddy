@@ -30,6 +30,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   final UserService _userService = UserService();
   final CategoryService _categoryService = CategoryService();
   int _selectedIndex = 0;
+  bool _isSidebarOpen = true; // Sidebar toggle state
 
   final List<String> _menuItems = [
     'Dashboard',
@@ -92,142 +93,225 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   @override
   Widget build(BuildContext context) {
     final user = _userService.currentUser;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 800;
 
     return Scaffold(
       body: Row(
         children: [
-          // Sidebar
-          Container(
-            width: 260,
-            color: const Color(0xFF1E293B),
-            child: Column(
-              children: [
-                // Logo Header
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              AppTheme.primaryColor,
-                              AppTheme.primaryLight,
+          // Sidebar - collapsible
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: _isSidebarOpen ? 260 : 0,
+            child: _isSidebarOpen
+                ? Container(
+                    width: 260,
+                    color: const Color(0xFF1E293B),
+                    child: Column(
+                      children: [
+                        // Logo Header with close button for small screens
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      AppTheme.primaryColor,
+                                      AppTheme.primaryLight,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.admin_panel_settings,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Go Buddy',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Admin Panel',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isSmallScreen)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () =>
+                                      setState(() => _isSidebarOpen = false),
+                                ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
-                          Icons.admin_panel_settings,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Go Buddy',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Admin Panel',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(color: Colors.white24, height: 1),
-                // Menu Items
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    itemCount: _menuItems.length,
-                    itemBuilder: (context, index) {
-                      final isSelected = _selectedIndex == index;
-                      return _buildMenuItem(
-                        _menuItems[index],
-                        _getMenuIcon(index),
-                        isSelected,
-                        () => setState(() => _selectedIndex = index),
-                      );
-                    },
-                  ),
-                ),
-                // User Info
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(26),
-                    border: const Border(
-                      top: BorderSide(color: Colors.white24),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: AppTheme.primaryColor,
-                        child: Text(
-                          user?.firstName?.substring(0, 1).toUpperCase() ?? 'A',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        const Divider(color: Colors.white24, height: 1),
+                        // Menu Items
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            itemCount: _menuItems.length,
+                            itemBuilder: (context, index) {
+                              final isSelected = _selectedIndex == index;
+                              return _buildMenuItem(
+                                _menuItems[index],
+                                _getMenuIcon(index),
+                                isSelected,
+                                () {
+                                  setState(() => _selectedIndex = index);
+                                  if (isSmallScreen) {
+                                    setState(() => _isSidebarOpen = false);
+                                  }
+                                },
+                              );
+                            },
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user?.fullName ?? 'Admin',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                        // User Info
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(26),
+                            border: const Border(
+                              top: BorderSide(color: Colors.white24),
                             ),
-                            Text(
-                              user?.phoneNumber ?? '',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: AppTheme.primaryColor,
+                                child: Text(
+                                  user?.firstName
+                                          ?.substring(0, 1)
+                                          .toUpperCase() ??
+                                      'A',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user?.fullName ?? 'Admin',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      user?.phoneNumber ?? '',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.logout,
+                                  color: Colors.white70,
+                                ),
+                                onPressed: _handleLogout,
+                                tooltip: 'Logout',
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.logout, color: Colors.white70),
-                        onPressed: _handleLogout,
-                        tooltip: 'Logout',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                      ],
+                    ),
+                  )
+                : null,
           ),
           // Main Content
           Expanded(
-            child: Container(
-              color: const Color(0xFFF5F7FA),
-              child: _buildContent(),
+            child: Column(
+              children: [
+                // Top Bar with hamburger menu
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(13),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Hamburger Menu Button
+                      IconButton(
+                        icon: Icon(
+                          _isSidebarOpen ? Icons.menu_open : Icons.menu,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        onPressed: () =>
+                            setState(() => _isSidebarOpen = !_isSidebarOpen),
+                        tooltip: _isSidebarOpen ? 'Close Menu' : 'Open Menu',
+                      ),
+                      const SizedBox(width: 8),
+                      // Current page title
+                      Text(
+                        _menuItems[_selectedIndex],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const Spacer(),
+                      // Quick actions
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () => setState(() {}),
+                        tooltip: 'Refresh',
+                      ),
+                    ],
+                  ),
+                ),
+                // Content area
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFFF5F7FA),
+                    child: _buildContent(),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -307,15 +391,15 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
   Widget _buildDashboard() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Dashboard',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           // Stats Cards with real data
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
@@ -349,28 +433,24 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                         }
                       }
 
-                      return GridView.count(
-                        crossAxisCount: 4,
-                        shrinkWrap: true,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.5,
-                        physics: const NeverScrollableScrollPhysics(),
+                      return Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
                         children: [
                           _buildStatCard(
-                            'Total Services',
+                            'Services',
                             '$servicesCount',
                             Icons.inventory_2,
                             Colors.blue,
                           ),
                           _buildStatCard(
-                            'Total Orders',
+                            'Orders',
                             '$ordersCount',
                             Icons.shopping_cart,
                             Colors.green,
                           ),
                           _buildStatCard(
-                            'Total Users',
+                            'Users',
                             '$usersCount',
                             Icons.people,
                             Colors.orange,
@@ -389,13 +469,13 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
               );
             },
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           // Recent Orders Section
           const Text(
             'Recent Orders',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('orders')
@@ -405,7 +485,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             builder: (context, snapshot) {
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -443,38 +523,65 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                       order['status'] ?? 'pending',
                     );
 
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: _getStatusColor(
-                          status,
-                        ).withValues(alpha: 0.1),
-                        child: Icon(
-                          Icons.shopping_bag,
-                          color: _getStatusColor(status),
-                        ),
-                      ),
-                      title: Text(
-                        order['service_name'] ?? 'Unknown',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(order['user_phone'] ?? ''),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(status).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          status.displayName,
-                          style: TextStyle(
-                            color: _getStatusColor(status),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                    return Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: _getStatusColor(
+                              status,
+                            ).withValues(alpha: 0.1),
+                            child: Icon(
+                              Icons.shopping_bag,
+                              color: _getStatusColor(status),
+                              size: 16,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  order['service_name'] ?? 'Unknown',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  order['user_phone'] ?? '',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(
+                                status,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              status.displayName,
+                              style: TextStyle(
+                                color: _getStatusColor(status),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -494,52 +601,37 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: 140,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(13),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(51),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withAlpha(51),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 11)),
         ],
       ),
     );
@@ -1586,24 +1678,24 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           color: Colors.white,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Orders',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
                 onPressed: () => setState(() {}),
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Refresh'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
+                    horizontal: 16,
+                    vertical: 12,
                   ),
                 ),
               ),
@@ -1638,7 +1730,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 itemCount: orders.length,
                 itemBuilder: (context, index) {
                   final orderDoc = orders[index];
@@ -1648,135 +1740,147 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   );
 
                   return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: const EdgeInsets.only(bottom: 12),
                     elevation: 2,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Order Number
-                          CircleAvatar(
-                            backgroundColor: AppTheme.primaryColor,
-                            child: Text(
-                              '${index + 1}',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-
-                          // Service Info
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  order['service_name'] ?? 'Unknown Service',
+                          // Top row: Order number, service name, status
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: AppTheme.primaryColor,
+                                child: Text(
+                                  '${index + 1}',
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontSize: 12,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '₹${order['amount']?.toStringAsFixed(0) ?? '0'}',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Customer Info
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(
-                                      Icons.phone,
-                                      size: 14,
-                                      color: Colors.grey,
+                                    Text(
+                                      order['service_name'] ??
+                                          'Unknown Service',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(order['user_phone'] ?? 'No phone'),
+                                    Text(
+                                      '₹${order['amount']?.toStringAsFixed(0) ?? '0'}',
+                                      style: TextStyle(
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_today,
-                                      size: 14,
-                                      color: Colors.grey,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(order['booking_time'] ?? ''),
-                                  ],
+                              ),
+                              // Status dropdown
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
                                 ),
-                              ],
-                            ),
-                          ),
-
-                          // Status Dropdown
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(
-                                currentStatus,
-                              ).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _getStatusColor(currentStatus),
-                              ),
-                            ),
-                            child: DropdownButton<OrderStatus>(
-                              value: currentStatus,
-                              underline: const SizedBox(),
-                              icon: Icon(
-                                Icons.arrow_drop_down,
-                                color: _getStatusColor(currentStatus),
-                              ),
-                              items: OrderStatus.values.map((status) {
-                                return DropdownMenuItem(
-                                  value: status,
-                                  child: Text(
-                                    status.displayName,
-                                    style: TextStyle(
-                                      color: _getStatusColor(status),
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(
+                                    currentStatus,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: _getStatusColor(currentStatus),
                                   ),
-                                );
-                              }).toList(),
-                              onChanged: (newStatus) async {
-                                if (newStatus != null &&
-                                    newStatus != currentStatus) {
-                                  await FirebaseFirestore.instance
-                                      .collection('orders')
-                                      .doc(orderDoc.id)
-                                      .update({'status': newStatus.value});
-
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Order status updated to ${newStatus.displayName}',
+                                ),
+                                child: DropdownButton<OrderStatus>(
+                                  value: currentStatus,
+                                  underline: const SizedBox(),
+                                  isDense: true,
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: _getStatusColor(currentStatus),
+                                    size: 20,
+                                  ),
+                                  items: OrderStatus.values.map((status) {
+                                    return DropdownMenuItem(
+                                      value: status,
+                                      child: Text(
+                                        status.displayName,
+                                        style: TextStyle(
+                                          color: _getStatusColor(status),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
                                         ),
-                                        backgroundColor: Colors.green,
                                       ),
                                     );
-                                  }
-                                }
-                              },
-                            ),
+                                  }).toList(),
+                                  onChanged: (newStatus) async {
+                                    if (newStatus != null &&
+                                        newStatus != currentStatus) {
+                                      await FirebaseFirestore.instance
+                                          .collection('orders')
+                                          .doc(orderDoc.id)
+                                          .update({'status': newStatus.value});
+
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Status: ${newStatus.displayName}',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 16),
+                          // Bottom row: Customer info
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.phone,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                order['user_phone'] ?? 'No phone',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              const SizedBox(width: 16),
+                              const Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  order['booking_time'] ?? '',
+                                  style: const TextStyle(fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1813,12 +1917,12 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           color: Colors.white,
           width: double.infinity,
           child: const Text(
             'Users Management',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
         ),
         Expanded(
@@ -1844,76 +1948,74 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 );
               }
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(
-                        Colors.grey[100],
-                      ),
-                      dataRowMinHeight: 60,
-                      dataRowMaxHeight: 60,
-                      columnSpacing: 24,
-                      columns: const [
-                        DataColumn(label: Text('User')),
-                        DataColumn(label: Text('Phone')),
-                        DataColumn(label: Text('Role')),
-                        DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('Joined')),
-                        DataColumn(label: Text('Actions')),
-                      ],
-                      rows: docs.map((doc) {
-                        final user = UserModel.fromFirestore(doc);
-                        return DataRow(
-                          cells: [
-                            DataCell(
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: AppTheme.primaryColor
-                                        .withValues(alpha: 0.1),
-                                    backgroundImage:
-                                        user.profilePicture != null &&
-                                            user.profilePicture!.isNotEmpty
-                                        ? NetworkImage(user.profilePicture!)
-                                        : null,
-                                    child:
-                                        user.profilePicture == null ||
-                                            user.profilePicture!.isEmpty
-                                        ? Text(
-                                            user.firstName?.isNotEmpty == true
-                                                ? user.firstName![0]
-                                                      .toUpperCase()
-                                                : 'U',
-                                            style: TextStyle(
-                                              color: AppTheme.primaryColor,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    user.fullName.isEmpty
-                                        ? 'No Name'
-                                        : user.fullName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final user = UserModel.fromFirestore(docs[index]);
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Top row: Avatar, name, role badge
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: AppTheme.primaryColor
+                                    .withValues(alpha: 0.1),
+                                backgroundImage:
+                                    user.profilePicture != null &&
+                                        user.profilePicture!.isNotEmpty
+                                    ? NetworkImage(user.profilePicture!)
+                                    : null,
+                                child:
+                                    user.profilePicture == null ||
+                                        user.profilePicture!.isEmpty
+                                    ? Text(
+                                        user.firstName?.isNotEmpty == true
+                                            ? user.firstName![0].toUpperCase()
+                                            : 'U',
+                                        style: TextStyle(
+                                          color: AppTheme.primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
                               ),
-                            ),
-                            DataCell(Text(user.phoneNumber)),
-                            DataCell(
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user.fullName.isEmpty
+                                          ? 'No Name'
+                                          : user.fullName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      user.phoneNumber,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Role badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -1925,42 +2027,40 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                       : (user.isStaff
                                             ? Colors.blue[50]
                                             : Colors.grey[100]),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: user.isSuperuser
-                                        ? Colors.purple[200]!
-                                        : (user.isStaff
-                                              ? Colors.blue[200]!
-                                              : Colors.grey[300]!),
-                                  ),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   user.isSuperuser
-                                      ? 'Super Admin'
-                                      : (user.isStaff ? 'Admin' : 'User'),
+                                      ? 'Admin'
+                                      : (user.isStaff ? 'Staff' : 'User'),
                                   style: TextStyle(
                                     color: user.isSuperuser
                                         ? Colors.purple[700]
                                         : (user.isStaff
                                               ? Colors.blue[700]
                                               : Colors.grey[700]),
-                                    fontSize: 12,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
-                            ),
-                            DataCell(
+                            ],
+                          ),
+                          const Divider(height: 16),
+                          // Bottom row: Status and joined date
+                          Row(
+                            children: [
+                              // Status
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                                  horizontal: 6,
+                                  vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
                                   color: user.isActive
                                       ? Colors.green[50]
                                       : Colors.red[50],
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   user.isActive ? 'Active' : 'Inactive',
@@ -1968,30 +2068,41 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                     color: user.isActive
                                         ? Colors.green[700]
                                         : Colors.red[700],
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
-                            ),
-                            DataCell(
+                              const SizedBox(width: 12),
+                              Icon(
+                                Icons.calendar_today,
+                                size: 12,
+                                color: Colors.grey[500],
+                              ),
+                              const SizedBox(width: 4),
                               Text(
                                 '${user.dateJoined.day}/${user.dateJoined.month}/${user.dateJoined.year}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[600],
+                                ),
                               ),
-                            ),
-                            DataCell(
+                              const Spacer(),
                               IconButton(
-                                icon: const Icon(Icons.more_vert),
+                                icon: const Icon(Icons.more_vert, size: 18),
                                 onPressed: () {
                                   // TODO: Show user details/edit dialog
                                 },
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
                               ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           ),

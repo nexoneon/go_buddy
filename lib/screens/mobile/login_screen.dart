@@ -196,10 +196,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       // New user - create user in Firestore
       await _userService.createUser(uid: uid, phoneNumber: phoneNumber);
 
-      // Navigate to Profile Screen
+      // Navigate to Profile Screen (initial setup mode)
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MobileProfileScreen()),
+          MaterialPageRoute(
+            builder: (context) =>
+                const MobileProfileScreen(isInitialSetup: true),
+          ),
         );
       }
     } else {
@@ -216,11 +219,12 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
       // Check if profile is complete
       if (!user.isProfileComplete) {
-        // Navigate to Profile Screen to complete profile
+        // Navigate to Profile Screen to complete profile (initial setup mode)
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => const MobileProfileScreen(),
+              builder: (context) =>
+                  const MobileProfileScreen(isInitialSetup: true),
             ),
           );
         }

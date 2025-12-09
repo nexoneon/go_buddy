@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../services/order_service.dart';
 import '../../services/user_service.dart';
 import '../../config/config.dart';
+import 'profile_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final ServiceModel service;
@@ -21,6 +22,101 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final UserService _userService = UserService();
 
   void _showBookingDialog() async {
+    // First check if user profile is complete
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please login to book'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Get user and check profile completion
+    final user = await _userService.getUser(uid);
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error loading user data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Check if required fields are filled
+    final missingFields = <String>[];
+    if (user.firstName == null || user.firstName!.isEmpty) {
+      missingFields.add('First Name');
+    }
+    if (user.lastName == null || user.lastName!.isEmpty) {
+      missingFields.add('Last Name');
+    }
+    if (user.gender == null || user.gender!.isEmpty) {
+      missingFields.add('Gender');
+    }
+    if (user.address == null || user.address!.isEmpty) {
+      missingFields.add('Address');
+    }
+
+    if (missingFields.isNotEmpty && mounted) {
+      // Show dialog to ask user to complete profile
+      final shouldNavigate = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Complete Your Profile'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Please complete the following before booking:'),
+              const SizedBox(height: 12),
+              ...missingFields.map(
+                (field) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.circle, size: 8, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Text(field),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0D7377),
+              ),
+              child: const Text('Go to Profile'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldNavigate == true && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MobileProfileScreen()),
+        );
+      }
+      return;
+    }
+
+    // Profile is complete, proceed with booking dialog
     final formKey = GlobalKey<FormState>();
     final addressController = TextEditingController();
     final dateController = TextEditingController();
@@ -29,13 +125,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     bool isBooking = false;
     bool isFormValid = false;
 
-    // Load user's address
-    final uid = _authService.currentUser?.uid;
-    if (uid != null) {
-      final user = await _userService.getUser(uid);
-      if (user?.address != null && user!.address!.isNotEmpty) {
-        addressController.text = user.address!;
-      }
+    // Pre-fill user's address (we already have user from profile check above)
+    if (user.address != null && user.address!.isNotEmpty) {
+      addressController.text = user.address!;
     }
 
     // Function to check if all fields are valid

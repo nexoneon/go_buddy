@@ -7,8 +7,13 @@ import 'main_home_screen.dart';
 /// Mobile Profile Screen
 ///
 /// Screen for new users to complete their profile after registration
+/// or for existing users to edit their profile from settings
 class MobileProfileScreen extends StatefulWidget {
-  const MobileProfileScreen({super.key});
+  /// If true, this is first-time setup - user cannot leave without saving
+  /// If false, this is editing from settings - back button and nav bar are shown
+  final bool isInitialSetup;
+
+  const MobileProfileScreen({super.key, this.isInitialSetup = false});
 
   @override
   State<MobileProfileScreen> createState() => _MobileProfileScreenState();
@@ -168,54 +173,86 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
   int _selectedIndex = 4; // Settings is selected
 
   void _onNavItemTapped(int index) {
-    if (index != 4) {
-      Navigator.pop(context); // Go back to main screen
+    // Only allow navigation if not initial setup
+    if (!widget.isInitialSetup && index != 4) {
+      // Navigate back to main screen with the selected tab
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainHomeScreen()),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        title: const Text('Edit Profile'),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: const Color(0xFF0D7377),
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    return PopScope(
+      // Prevent back button on initial setup
+      canPop: !widget.isInitialSetup,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && widget.isInitialSetup) {
+          // Show message that profile must be completed
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please complete your profile to continue'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FA),
+        appBar: AppBar(
+          title: Text(
+            widget.isInitialSetup ? 'Complete Profile' : 'Edit Profile',
+          ),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: const Color(0xFF0D7377),
+          foregroundColor: Colors.white,
+          // Hide back button for initial setup
+          automaticallyImplyLeading: !widget.isInitialSetup,
+          leading: widget.isInitialSetup
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MainHomeScreen(),
+                    ),
+                  ),
+                ),
         ),
-      ),
-      body: _isLoadingData
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF0D7377)),
-            )
-          : SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-                      // Info Card
-                      _buildInfoCard(),
-                      const SizedBox(height: 24),
-                      // Form Fields
-                      _buildFormFields(),
-                      const SizedBox(height: 24),
-                      // Submit Button
-                      _buildSubmitButton(),
-                      const SizedBox(height: 24),
-                    ],
+        body: _isLoadingData
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFF0D7377)),
+              )
+            : SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
+                        // Info Card
+                        _buildInfoCard(),
+                        const SizedBox(height: 24),
+                        // Form Fields
+                        _buildFormFields(),
+                        const SizedBox(height: 24),
+                        // Submit Button
+                        _buildSubmitButton(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-      bottomNavigationBar: _buildBottomNav(),
+        // Hide bottom nav for initial setup
+        bottomNavigationBar: widget.isInitialSetup ? null : _buildBottomNav(),
+      ),
     );
   }
 

@@ -87,6 +87,19 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         _errorMessage = null;
       });
 
+      // Check if user exists and is NOT an admin (superusers should use web portal)
+      final existingUser = await _userService.getUserByPhone(_fullPhoneNumber);
+
+      // If user exists and is a superuser, block mobile login
+      if (existingUser != null && existingUser.isSuperuser) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Admin accounts must use the web portal to login.';
+        });
+        return;
+      }
+
+      // User is either new or regular user, proceed with OTP
       await _authService.sendOTP(
         phoneNumber: _fullPhoneNumber,
         onCodeSent: (verificationId, resendToken) {

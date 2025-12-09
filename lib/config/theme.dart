@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 /// Contains core theme data shared across all platforms.
 /// Platform-specific extensions are in web_theme.dart and mobile_theme.dart.
 class AppTheme {
-  // Primary Colors
-  static const Color primaryColor = Color(0xFF6366F1);
-  static const Color primaryDark = Color(0xFF4F46E5);
-  static const Color primaryLight = Color(0xFF818CF8);
-  static const Color primaryVeryLight = Color(0xFFE0E7FF);
+  // Primary Colors - Teal Theme
+  static const Color primaryColor = Color(0xFF0D7377);
+  static const Color primaryDark = Color(0xFF095557);
+  static const Color primaryLight = Color(0xFF14919B);
+  static const Color primaryVeryLight = Color(0xFFE0F2F1);
 
   // Secondary Colors
   static const Color secondaryColor = Color(0xFF10B981);

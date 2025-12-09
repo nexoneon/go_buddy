@@ -25,6 +25,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   final UserService _userService = UserService();
   final CategoryService _categoryService = CategoryService();
   final ServiceService _serviceService = ServiceService();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   int _selectedIndex = 2; // Home is selected by default
 
   @override
@@ -167,10 +169,10 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   Widget _buildPromoBanner() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      height: 180,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -179,101 +181,73 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFD32F2F).withAlpha(77),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Stack(
+      child: Row(
         children: [
-          // Decorative circles
-          Positioned(
-            right: -30,
-            top: -30,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(26),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -20,
-            bottom: -20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(26),
-              ),
-            ),
-          ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(20),
+          // Left content
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.local_offer_rounded,
                   color: Colors.white,
-                  size: 32,
+                  size: 24,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 const Text(
                   'Washroom Cleaning',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Text(
                       '₹799/-',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.white.withAlpha(204),
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     const Text(
                       'only at ₹599/-',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFEB3B),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Order Now',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
               ],
+            ),
+          ),
+          // Right button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFEB3B),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text(
+              'Order\nNow',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 12,
+              ),
             ),
           ),
         ],
@@ -297,10 +271,27 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           ],
         ),
         child: TextField(
+          controller: _searchController,
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value.toLowerCase();
+            });
+          },
           decoration: InputDecoration(
-            hintText: 'Search your service here',
+            hintText: 'Search categories...',
             hintStyle: TextStyle(color: Colors.grey[400]),
             prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
+                  )
+                : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -332,7 +323,38 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final categories = snapshot.data ?? [];
+              final allCategories = snapshot.data ?? [];
+
+              // Filter categories based on search
+              final categories = _searchQuery.isEmpty
+                  ? allCategories
+                  : allCategories
+                        .where(
+                          (c) => c.name.toLowerCase().contains(_searchQuery),
+                        )
+                        .toList();
+
+              if (categories.isEmpty && _searchQuery.isNotEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No categories found for "$_searchQuery"',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
               if (categories.isEmpty) {
                 return const Center(
@@ -348,9 +370,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.8, // Adjusted for extra text
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.75, // More space for content
                 ),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
@@ -372,7 +394,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(13),
@@ -384,7 +406,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           onTap: () {
             Navigator.push(
               context,
@@ -397,40 +419,43 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: Color(category.color).withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.category_outlined, // Dynamic icon later
+                    Icons.category_outlined,
                     color: Color(category.color),
-                    size: 28,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  category.name,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2C3E50),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: Text(
+                    category.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2C3E50),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   '$count Services',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),

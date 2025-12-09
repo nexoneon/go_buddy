@@ -4,11 +4,17 @@ import '../../services/auth_service.dart';
 import '../../services/order_service.dart';
 import '../../config/config.dart';
 
-class MyOrdersScreen extends StatelessWidget {
-  MyOrdersScreen({super.key});
+class MyOrdersScreen extends StatefulWidget {
+  const MyOrdersScreen({super.key});
 
+  @override
+  State<MyOrdersScreen> createState() => _MyOrdersScreenState();
+}
+
+class _MyOrdersScreenState extends State<MyOrdersScreen> {
   final AuthService _authService = AuthService();
   final OrderService _orderService = OrderService();
+  int _selectedIndex = 1; // My Orders is index 1
 
   @override
   Widget build(BuildContext context) {
@@ -16,16 +22,22 @@ class MyOrdersScreen extends StatelessWidget {
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('My Orders')),
+        appBar: AppBar(
+          title: const Text('My Orders'),
+          backgroundColor: const Color(0xFF0D7377),
+          foregroundColor: Colors.white,
+        ),
         body: const Center(child: Text('Please login to view orders')),
       );
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text('My Orders'),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF0D7377),
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: StreamBuilder<List<OrderModel>>(
         stream: _orderService.getUserOrders(user.uid),
@@ -75,6 +87,74 @@ class MyOrdersScreen extends StatelessWidget {
           );
         },
       ),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            if (index != _selectedIndex) {
+              Navigator.pop(context); // Go back to home
+            }
+          },
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.transparent,
+          selectedItemColor: const Color(0xFF0D7377),
+          unselectedItemColor: Colors.grey,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.favorite_border),
+              activeIcon: Icon(Icons.favorite),
+              label: 'Favourite',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_bag_outlined),
+              activeIcon: Icon(Icons.shopping_bag),
+              label: 'My Orders',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.help_outline),
+              activeIcon: Icon(Icons.help),
+              label: 'Help',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -88,7 +168,14 @@ class MyOrdersScreen extends StatelessWidget {
         statusColor = Colors.red;
         break;
       case 'confirmed':
+      case 'accepted':
         statusColor = Colors.blue;
+        break;
+      case 'in_progress':
+        statusColor = Colors.purple;
+        break;
+      case 'hold':
+        statusColor = Colors.amber;
         break;
       default:
         statusColor = Colors.orange;
@@ -142,9 +229,9 @@ class MyOrdersScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '₹${order.amount.toStringAsFixed(0)}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
-                          color: AppTheme.primaryColor,
+                          color: Color(0xFF0D7377),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -161,7 +248,7 @@ class MyOrdersScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    order.status.toUpperCase(),
+                    order.status.toUpperCase().replaceAll('_', ' '),
                     style: TextStyle(
                       color: statusColor,
                       fontWeight: FontWeight.bold,

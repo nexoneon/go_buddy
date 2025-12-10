@@ -1,8 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-// import 'package:firebase_storage/firebase_storage.dart';
-// import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:flutter/services.dart';
 import '../../config/config.dart';
@@ -717,17 +716,56 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // Category Icon
+            // Category Image or Icon
             Container(
-              padding: const EdgeInsets.all(12),
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 color: Color(category.color).withAlpha(51),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                Icons.category,
-                size: 24,
-                color: Color(category.color),
+              child: Builder(
+                builder: (context) {
+                  final imageUrl = category.imageUrl;
+                  if (imageUrl != null && imageUrl.isNotEmpty) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        width: 60,
+                        height: 60,
+                        cacheWidth: 120,
+                        cacheHeight: 120,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading category image: $error');
+                          return Icon(
+                            Icons.image_not_supported,
+                            size: 24,
+                            color: Color(category.color),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                  return Icon(
+                    Icons.category,
+                    size: 24,
+                    color: Color(category.color),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -800,127 +838,337 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         : Colors.blue;
     bool isActive = category?.isActive ?? true;
 
+    // Image state
+    Uint8List? selectedImageBytes;
+    String? selectedImageName;
+    String? existingImageUrl = category?.imageUrl;
+    bool isUploading = false;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
+          // Image picker function
+          Future<void> pickImage() async {
+            try {
+              final ImagePicker picker = ImagePicker();
+              final XFile? image = await picker.pickImage(
+                source: ImageSource.gallery,
+                maxWidth: 512,
+                maxHeight: 512,
+                imageQuality: 85,
+              );
+
+              if (image != null) {
+                final bytes = await image.readAsBytes();
+                setState(() {
+                  selectedImageBytes = bytes;
+                  selectedImageName = image.name;
+                  existingImageUrl =
+                      null; // Clear existing image when new one is selected
+                });
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error picking image: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+
           return AlertDialog(
             title: Text(category == null ? 'Add Category' : 'Edit Category'),
             content: SizedBox(
-              width: 400,
+              width: 450,
               child: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Category Name',
-                        border: OutlineInputBorder(),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Image Upload Section
+                      const Text(
+                        'Category Image',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
-                      validator: (v) =>
-                          v?.isEmpty == true ? 'Name is required' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    // Color Picker (Simplified)
-                    Row(
-                      children: [
-                        const Text('Color: '),
-                        const SizedBox(width: 8),
-                        ...[
-                          Colors.blue,
-                          Colors.red,
-                          Colors.green,
-                          Colors.orange,
-                          Colors.purple,
-                          Colors.teal,
-                        ].map((c) {
-                          return GestureDetector(
-                            onTap: () => setState(() => selectedColor = c),
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: c,
-                                shape: BoxShape.circle,
-                                border: selectedColor == c
-                                    ? Border.all(color: Colors.black, width: 2)
-                                    : null,
+                      const SizedBox(height: 8),
+                      Center(
+                        child: GestureDetector(
+                          onTap: isUploading ? null : pickImage,
+                          child: Container(
+                            width: 150,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey[300]!,
+                                width: 2,
+                                style: BorderStyle.solid,
                               ),
                             ),
-                          );
-                        }),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    SwitchListTile(
-                      title: const Text('Active'),
-                      value: isActive,
-                      onChanged: (val) => setState(() => isActive = val),
-                    ),
-                  ],
+                            child: selectedImageBytes != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        Image.memory(
+                                          selectedImageBytes!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                        Positioned(
+                                          top: 4,
+                                          right: 4,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                selectedImageBytes = null;
+                                                selectedImageName = null;
+                                              });
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : existingImageUrl != null &&
+                                      existingImageUrl!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        Image.network(
+                                          existingImageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              _buildImagePlaceholder(),
+                                        ),
+                                        Positioned(
+                                          top: 4,
+                                          right: 4,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                existingImageUrl = null;
+                                              });
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : _buildImagePlaceholder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          selectedImageBytes != null
+                              ? 'Tap to change image'
+                              : existingImageUrl != null
+                              ? 'Tap to change image'
+                              : 'Tap to upload image',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Category Name Field
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Category Name',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) =>
+                            v?.isEmpty == true ? 'Name is required' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      // Color Picker (Simplified)
+                      Row(
+                        children: [
+                          const Text('Color: '),
+                          const SizedBox(width: 8),
+                          ...[
+                            Colors.blue,
+                            Colors.red,
+                            Colors.green,
+                            Colors.orange,
+                            Colors.purple,
+                            Colors.teal,
+                          ].map((c) {
+                            return GestureDetector(
+                              onTap: () => setState(() => selectedColor = c),
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: c,
+                                  shape: BoxShape.circle,
+                                  border: selectedColor == c
+                                      ? Border.all(
+                                          color: Colors.black,
+                                          width: 2,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SwitchListTile(
+                        title: const Text('Active'),
+                        value: isActive,
+                        onChanged: (val) => setState(() => isActive = val),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: isUploading ? null : () => Navigator.pop(context),
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.pop(
-                      context,
-                    ); // Close dialog first? Or valid logic
+                onPressed: isUploading
+                    ? null
+                    : () async {
+                        if (formKey.currentState!.validate()) {
+                          setState(() => isUploading = true);
 
-                    final newCategory = CategoryModel(
-                      id: category?.id ?? '', // ID handled by firestore for add
-                      name: nameController.text.trim(),
-                      iconCode: '', // Default for now
-                      color: selectedColor.value,
-                      isActive: isActive,
-                    );
+                          String? imageUrl = existingImageUrl;
 
-                    try {
-                      if (category == null) {
-                        await _categoryService.addCategory(newCategory);
-                      } else {
-                        await _categoryService.updateCategory(newCategory);
-                      }
+                          try {
+                            // Upload new image if selected
+                            if (selectedImageBytes != null) {
+                              imageUrl = await _categoryService
+                                  .uploadCategoryImage(
+                                    selectedImageBytes!,
+                                    selectedImageName ?? 'category_image.png',
+                                  );
+                            }
 
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              category == null
-                                  ? 'Category added successfully'
-                                  : 'Category updated successfully',
-                            ),
-                            backgroundColor: Colors.green,
+                            final newCategory = CategoryModel(
+                              id: category?.id ?? '',
+                              name: nameController.text.trim(),
+                              iconCode: '',
+                              color: selectedColor.value,
+                              isActive: isActive,
+                              imageUrl: imageUrl,
+                            );
+
+                            if (category == null) {
+                              await _categoryService.addCategory(newCategory);
+                            } else {
+                              await _categoryService.updateCategory(
+                                newCategory,
+                              );
+                            }
+
+                            Navigator.pop(context);
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    category == null
+                                        ? 'Category added successfully'
+                                        : 'Category updated successfully',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setState(() => isUploading = false);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
+                child: isUploading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
                           ),
-                        );
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  }
-                },
-                child: const Text('Save'),
+                        ),
+                      )
+                    : const Text('Save'),
               ),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.add_photo_alternate_outlined,
+          size: 40,
+          color: Colors.grey[400],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Add Image',
+          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+        ),
+      ],
     );
   }
 

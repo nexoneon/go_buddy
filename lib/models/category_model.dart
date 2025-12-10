@@ -7,6 +7,7 @@ class CategoryModel {
   final String iconCode; // Store icon code point as string or name
   final int color; // Store color as int (0xAARRGGBB)
   final bool isActive;
+  final String? imageUrl; // Category image URL from Firebase Storage
 
   CategoryModel({
     required this.id,
@@ -14,6 +15,7 @@ class CategoryModel {
     required this.iconCode,
     required this.color,
     this.isActive = true,
+    this.imageUrl,
   });
 
   factory CategoryModel.fromFirestore(DocumentSnapshot doc) {
@@ -24,6 +26,7 @@ class CategoryModel {
       iconCode: data['icon_code'] ?? '',
       color: data['color'] ?? 0xFF000000,
       isActive: data['is_active'] ?? true,
+      imageUrl: data['image_url'],
     );
   }
 
@@ -33,6 +36,7 @@ class CategoryModel {
       'icon_code': iconCode,
       'color': color,
       'is_active': isActive,
+      'image_url': imageUrl,
     };
   }
 
@@ -42,6 +46,7 @@ class CategoryModel {
     String? iconCode,
     int? color,
     bool? isActive,
+    String? imageUrl,
   }) {
     return CategoryModel(
       id: id ?? this.id,
@@ -49,6 +54,7 @@ class CategoryModel {
       iconCode: iconCode ?? this.iconCode,
       color: color ?? this.color,
       isActive: isActive ?? this.isActive,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 }

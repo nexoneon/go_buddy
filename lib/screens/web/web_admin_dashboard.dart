@@ -842,6 +842,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     Uint8List? selectedImageBytes;
     String? selectedImageName;
     String? existingImageUrl = category?.imageUrl;
+    final String? originalImageUrl =
+        category?.imageUrl; // Track original for deletion
     bool isUploading = false;
 
     showDialog(
@@ -1081,6 +1083,25 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                           String? imageUrl = existingImageUrl;
 
                           try {
+                            // Check if image was removed or replaced
+                            final bool imageWasRemoved =
+                                originalImageUrl != null &&
+                                originalImageUrl.isNotEmpty &&
+                                existingImageUrl == null &&
+                                selectedImageBytes == null;
+
+                            final bool imageWasReplaced =
+                                originalImageUrl != null &&
+                                originalImageUrl.isNotEmpty &&
+                                selectedImageBytes != null;
+
+                            // Delete old image from storage if removed or replaced
+                            if (imageWasRemoved || imageWasReplaced) {
+                              await _categoryService.deleteCategoryImage(
+                                originalImageUrl,
+                              );
+                            }
+
                             // Upload new image if selected
                             if (selectedImageBytes != null) {
                               imageUrl = await _categoryService
@@ -1257,12 +1278,23 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       return;
     }
 
+    // Get the category to check for image
+    final categoryDoc = await FirebaseFirestore.instance
+        .collection('categories')
+        .doc(id)
+        .get();
+
+    final categoryData = categoryDoc.data();
+    final String? imageUrl = categoryData?['image_url'];
+
     // No services assigned - proceed with delete confirmation
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Category'),
-        content: const Text('Are you sure you want to delete this category?'),
+        content: const Text(
+          'Are you sure you want to delete this category? This will also delete the category image if present.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1278,7 +1310,14 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     );
 
     if (confirm == true) {
+      // Delete the image from storage if exists
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        await _categoryService.deleteCategoryImage(imageUrl);
+      }
+
+      // Delete the category document
       await _categoryService.deleteCategory(id);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

@@ -122,11 +122,20 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: const Color(0xFF0D7377).withAlpha(51),
-                    child: const Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Color(0xFF0D7377),
-                    ),
+                    backgroundImage:
+                        (user?.profilePicture != null &&
+                            user!.profilePicture!.isNotEmpty)
+                        ? NetworkImage(user.profilePicture!)
+                        : null,
+                    child:
+                        (user?.profilePicture == null ||
+                            user!.profilePicture!.isEmpty)
+                        ? const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Color(0xFF0D7377),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   Text(

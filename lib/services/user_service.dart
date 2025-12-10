@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
@@ -10,6 +11,7 @@ class UserService extends ChangeNotifier {
   UserService._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   static const String _collection = 'users';
 
   UserModel? _currentUser;
@@ -164,6 +166,44 @@ class UserService extends ChangeNotifier {
       debugPrint('✅ Last login updated for: $uid');
     } catch (e) {
       debugPrint('❌ Error updating last login: $e');
+    }
+  }
+
+  /// Upload profile picture to Firebase Storage and return the download URL
+  Future<String?> uploadProfilePicture(String uid, Uint8List imageBytes) async {
+    try {
+      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final String storagePath = 'profile_pictures/${uid}_$timestamp.jpg';
+
+      debugPrint('Uploading profile picture to: $storagePath');
+
+      final Reference ref = _storage.ref().child(storagePath);
+      final UploadTask uploadTask = ref.putData(
+        imageBytes,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      final TaskSnapshot snapshot = await uploadTask;
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      debugPrint('✅ Profile picture uploaded. URL: $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      debugPrint('❌ Error uploading profile picture: $e');
+      return null;
+    }
+  }
+
+  /// Delete profile picture from Firebase Storage
+  Future<void> deleteProfilePicture(String imageUrl) async {
+    try {
+      if (imageUrl.isNotEmpty) {
+        final Reference ref = _storage.refFromURL(imageUrl);
+        await ref.delete();
+        debugPrint('✅ Profile picture deleted');
+      }
+    } catch (e) {
+      debugPrint('❌ Error deleting profile picture: $e');
     }
   }
 

@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../config/config.dart';
 import '../../services/user_service.dart';
 import '../../services/auth_service.dart';
@@ -28,11 +30,17 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
 
   final UserService _userService = UserService();
   final AuthService _authService = AuthService();
+  final ImagePicker _imagePicker = ImagePicker();
 
   String _selectedGender = 'Male';
   DateTime? _selectedDate;
   bool _isLoading = false;
   bool _isLoadingData = true;
+
+  // Profile picture state
+  Uint8List? _selectedImageBytes;
+  String? _existingProfilePicture;
+  bool _isUploadingImage = false;
 
   final List<String> _genders = [
     'Male',
@@ -56,6 +64,7 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
           _firstNameController.text = user.firstName ?? '';
           _lastNameController.text = user.lastName ?? '';
           _addressController.text = user.address ?? '';
+          _existingProfilePicture = user.profilePicture;
           if (user.dateOfBirth != null) {
             _selectedDate = user.dateOfBirth;
             _dobController.text =
@@ -112,6 +121,141 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
     }
   }
 
+  /// Show options to pick image from gallery or camera
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Text(
+                'Choose Profile Photo',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildImageOption(
+                    icon: Icons.camera_alt,
+                    label: 'Camera',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                  ),
+                  _buildImageOption(
+                    icon: Icons.photo_library,
+                    label: 'Gallery',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                  if (_existingProfilePicture != null ||
+                      _selectedImageBytes != null)
+                    _buildImageOption(
+                      icon: Icons.delete,
+                      label: 'Remove',
+                      color: Colors.red,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _removeImage();
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: (color ?? const Color(0xFF0D7377)).withAlpha(26),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 28,
+                color: color ?? const Color(0xFF0D7377),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: color ?? Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      _showSnackBar('Error picking image: $e', isSuccess: false);
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImageBytes = null;
+      _existingProfilePicture = null;
+    });
+  }
+
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
@@ -123,25 +267,68 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
         return;
       }
 
-      final success = await _userService.updateProfile(
-        uid: uid,
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        address: _addressController.text.trim(),
-        dateOfBirth: _selectedDate,
-        gender: _selectedGender,
-      );
+      try {
+        String? profilePictureUrl;
 
-      setState(() => _isLoading = false);
+        // Get original profile picture to check if we need to delete it
+        final currentUser = _userService.currentUser;
+        final originalProfilePicture = currentUser?.profilePicture;
 
-      if (success && mounted) {
-        _showSnackBar('Profile completed successfully!', isSuccess: true);
-        _navigateToHome();
-      } else {
-        _showSnackBar(
-          'Failed to update profile. Please try again.',
-          isSuccess: false,
+        // Upload new profile picture if selected
+        if (_selectedImageBytes != null) {
+          setState(() => _isUploadingImage = true);
+
+          // Delete old picture if exists
+          if (originalProfilePicture != null &&
+              originalProfilePicture.isNotEmpty) {
+            await _userService.deleteProfilePicture(originalProfilePicture);
+          }
+
+          profilePictureUrl = await _userService.uploadProfilePicture(
+            uid,
+            _selectedImageBytes!,
+          );
+          setState(() => _isUploadingImage = false);
+
+          if (profilePictureUrl == null) {
+            _showSnackBar('Failed to upload profile picture', isSuccess: false);
+          }
+        } else if (_existingProfilePicture == null &&
+            originalProfilePicture != null) {
+          // User removed the picture without adding new one
+          await _userService.deleteProfilePicture(originalProfilePicture);
+          profilePictureUrl = ''; // Set to empty to clear it
+        }
+
+        final success = await _userService.updateProfile(
+          uid: uid,
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          profilePicture: profilePictureUrl,
+          address: _addressController.text.trim(),
+          dateOfBirth: _selectedDate,
+          gender: _selectedGender,
         );
+
+        setState(() => _isLoading = false);
+
+        if (success && mounted) {
+          _showSnackBar('Profile saved successfully!', isSuccess: true);
+          if (widget.isInitialSetup) {
+            _navigateToHome();
+          }
+        } else {
+          _showSnackBar(
+            'Failed to update profile. Please try again.',
+            isSuccess: false,
+          );
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+          _isUploadingImage = false;
+        });
+        _showSnackBar('Error: $e', isSuccess: false);
       }
     }
   }
@@ -327,19 +514,71 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: const Color(0xFF0D7377).withAlpha(51),
-              child: const Icon(
-                Icons.person,
-                size: 40,
-                color: Color(0xFF0D7377),
+            // Profile Picture with edit overlay
+            GestureDetector(
+              onTap: _showImagePickerOptions,
+              child: Stack(
+                children: [
+                  // Profile Picture
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: const Color(0xFF0D7377).withAlpha(51),
+                    backgroundImage: _selectedImageBytes != null
+                        ? MemoryImage(_selectedImageBytes!)
+                        : (_existingProfilePicture != null &&
+                              _existingProfilePicture!.isNotEmpty)
+                        ? NetworkImage(_existingProfilePicture!)
+                              as ImageProvider
+                        : null,
+                    child:
+                        (_selectedImageBytes == null &&
+                            (_existingProfilePicture == null ||
+                                _existingProfilePicture!.isEmpty))
+                        ? const Icon(
+                            Icons.person,
+                            size: 50,
+                            color: Color(0xFF0D7377),
+                          )
+                        : null,
+                  ),
+                  // Camera overlay
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D7377),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        _isUploadingImage
+                            ? Icons.hourglass_top
+                            : Icons.camera_alt,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Tap to change photo',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Edit Your Profile',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              widget.isInitialSetup
+                  ? 'Complete Your Profile'
+                  : 'Edit Your Profile',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),

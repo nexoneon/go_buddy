@@ -1,0 +1,23 @@
+# Web Deployment Plan
+
+## Goal Description
+Deploy the Flutter web application to a web hosting service. Given the project's existing usage of Firebase (Functions, Firestore), Firebase Hosting is the recommended and assumed target.
+
+## User Review Required
+- **Hosting Service**: Assuming Firebase Hosting based on project history.
+- **Build Configuration**: Will use `flutter build web --release`.
+
+## Proposed Changes
+### Configuration
+- **[MODIFY]** [firebase.json](file:///d:/nexonn/go_buddy_app/go_buddy/firebase.json)
+    - Add `"hosting"` key pointing to `"public": "build/web"`.
+    - Add rewrites for Single Page App (SPA) behavior: `"source": "**", "destination": "/index.html"`.
+- **[NEW]** `.firebaserc`
+    - Set default project to `payservices-7827a`.
+
+## Verification Plan
+### Automated Tests
+- Run `flutter build web` to ensure the project builds successfully.
+
+### Manual Verification
+- After deployment, visit the provided Hosting URL to verify the app loads correctly.

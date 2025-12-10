@@ -1,0 +1,16 @@
+# Web Deployment Walkthrough
+
+## Completed Steps
+1.  **Configuration**:
+    -   Created [.firebaserc](file:///d:/nexonn/go_buddy_app/go_buddy/.firebaserc) with project alias `payservices-7827a`.
+    -   Updated [firebase.json](file:///d:/nexonn/go_buddy_app/go_buddy/firebase.json) to include hosting configuration pointing to `build/web` and responding as a Single Page Application (SPA).
+2.  **Build**:
+    -   Ran `flutter build web --release` successfully.
+3.  **Deployment**:
+    -   Running `firebase deploy --only hosting` to publish the app.
+
+## Verification
+-   **Build Success**: The Flutter web build completed with exit code 0.
+-   **Deployment**: Successful!
+    -   **Hosting URL**: [https://payservices-7827a.web.app](https://payservices-7827a.web.app)
+    -   **Project Console**: [https://console.firebase.google.com/project/payservices-7827a/overview](https://console.firebase.google.com/project/payservices-7827a/overview)

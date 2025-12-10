@@ -242,20 +242,20 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(51),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.settings, color: Colors.white),
-          ),
-          onPressed: _handleLogout,
-        ),
-        const SizedBox(width: 8),
-      ],
+      // actions: [
+      //   IconButton(
+      //     icon: Container(
+      //       padding: const EdgeInsets.all(8),
+      //       decoration: BoxDecoration(
+      //         color: Colors.white.withAlpha(51),
+      //         borderRadius: BorderRadius.circular(12),
+      //       ),
+      //       child: const Icon(Icons.settings, color: Colors.white),
+      //     ),
+      //     onPressed: _handleLogout,
+      //   ),
+      //   const SizedBox(width: 8),
+      // ],
     );
   }
 
@@ -534,18 +534,15 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Category Image or Icon
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
-                    color: Color(category.color).withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
+                    color: Color(category.color).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.category_outlined,
-                    color: Color(category.color),
-                    size: 24,
-                  ),
+                  child: _buildCategoryImage(category),
                 ),
                 const SizedBox(height: 8),
                 Flexible(
@@ -575,6 +572,55 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Build category image widget - shows image if available, otherwise shows icon
+  Widget _buildCategoryImage(CategoryModel category) {
+    final imageUrl = category.imageUrl;
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          imageUrl,
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to icon on error
+            return Icon(
+              Icons.category_outlined,
+              color: Color(category.color),
+              size: 26,
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(category.color),
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Default icon when no image
+    return Icon(
+      Icons.category_outlined,
+      color: Color(category.color),
+      size: 26,
     );
   }
 

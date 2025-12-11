@@ -38,33 +38,32 @@ class _HelpScreenState extends State<HelpScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Help & Support',
-          style: TextStyle(fontWeight: FontWeight.bold),
+    return Column(
+      children: [
+        // Tab Bar Header
+        Container(
+          color: AppTheme.primaryColor,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            tabs: const [
+              Tab(text: 'About Us', icon: Icon(Icons.info_outline, size: 20)),
+              Tab(text: 'FAQ', icon: Icon(Icons.help_outline, size: 20)),
+              Tab(text: 'Support', icon: Icon(Icons.support_agent, size: 20)),
+            ],
+          ),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(text: 'About Us', icon: Icon(Icons.info_outline, size: 20)),
-            Tab(text: 'FAQ', icon: Icon(Icons.help_outline, size: 20)),
-            Tab(text: 'Support', icon: Icon(Icons.support_agent, size: 20)),
-          ],
+        // Body
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [_buildAboutUsTab(), _buildFAQTab(), _buildSupportTab()],
+          ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildAboutUsTab(), _buildFAQTab(), _buildSupportTab()],
-      ),
+      ],
     );
   }
 

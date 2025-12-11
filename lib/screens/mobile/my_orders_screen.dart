@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/order_model.dart';
-import '../../services/auth_service.dart';
 import '../../services/order_service.dart';
+import '../../services/user_service.dart';
 import '../../config/config.dart';
 
 class MyOrdersScreen extends StatefulWidget {
@@ -13,8 +13,8 @@ class MyOrdersScreen extends StatefulWidget {
 
 class _MyOrdersScreenState extends State<MyOrdersScreen>
     with SingleTickerProviderStateMixin {
-  final AuthService _authService = AuthService();
   final OrderService _orderService = OrderService();
+  final UserService _userService = UserService();
   late TabController _tabController;
 
   @override
@@ -43,89 +43,67 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
 
   @override
   Widget build(BuildContext context) {
-    final user = _authService.currentUser;
+    final user = _userService.currentUser;
 
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          'My Orders',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: const Color(0xFF0D7377),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          if (user == null)
-            TextButton(
-              onPressed: () {
-                // Navigate to login
-              },
-              child: const Text(
-                'LOGIN',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+    return Column(
+      children: [
+        // Tab Bar Header
+        Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: const Color(0xFF0D7377),
+            unselectedLabelColor: Colors.grey[600],
+            indicatorColor: const Color(0xFF0D7377),
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: const Color(0xFF0D7377),
-              unselectedLabelColor: Colors.grey[600],
-              indicatorColor: const Color(0xFF0D7377),
-              indicatorWeight: 3,
-              labelStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-              tabs: const [
-                Tab(text: 'ON GOING'),
-                Tab(text: 'COMPLETED'),
-              ],
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
             ),
+            tabs: const [
+              Tab(text: 'ON GOING'),
+              Tab(text: 'COMPLETED'),
+            ],
           ),
         ),
-      ),
-      body: user == null
-          ? _buildNotLoggedIn()
-          : StreamBuilder<List<OrderModel>>(
-              stream: _orderService.getUserOrders(user.uid),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
+        // Body
+        Expanded(
+          child: user == null
+              ? _buildNotLoggedIn()
+              : StreamBuilder<List<OrderModel>>(
+                  stream: _orderService.getUserOrders(user.uid),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                final allOrders = snapshot.data ?? [];
-                final ongoingOrders = allOrders
-                    .where((o) => _isOngoing(o))
-                    .toList();
-                final completedOrders = allOrders
-                    .where((o) => _isCompleted(o))
-                    .toList();
+                    final allOrders = snapshot.data ?? [];
+                    final ongoingOrders = allOrders
+                        .where((o) => _isOngoing(o))
+                        .toList();
+                    final completedOrders = allOrders
+                        .where((o) => _isCompleted(o))
+                        .toList();
 
-                return TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOrdersList(ongoingOrders, isOngoing: true),
-                    _buildOrdersList(completedOrders, isOngoing: false),
-                  ],
-                );
-              },
-            ),
+                    return TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildOrdersList(ongoingOrders, isOngoing: true),
+                        _buildOrdersList(completedOrders, isOngoing: false),
+                      ],
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 

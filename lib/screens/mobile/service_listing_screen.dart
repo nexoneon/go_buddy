@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 import '../../services/service_service.dart';
+import '../../services/user_service.dart';
 import '../../config/config.dart';
 import 'service_detail_screen.dart';
 
@@ -20,15 +21,50 @@ class ServiceListingScreen extends StatefulWidget {
 
 class _ServiceListingScreenState extends State<ServiceListingScreen> {
   final ServiceService _serviceService = ServiceService();
+  final UserService _userService = UserService();
 
   @override
   Widget build(BuildContext context) {
+    final user = _userService.currentUser;
+
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(widget.categoryName),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         elevation: 0,
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, color: AppTheme.primaryColor, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    user?.fullName ?? 'User',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    widget.categoryName,
+                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       body: StreamBuilder<List<ServiceModel>>(
         stream: _serviceService.getServicesByCategory(widget.categoryId),

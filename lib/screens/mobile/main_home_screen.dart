@@ -83,19 +83,22 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   void _onNavItemTapped(int index) {
     setState(() => _selectedIndex = index);
-    // Navigate to My Orders when index is 1
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MyOrdersScreen()),
-      );
-    }
-    // Navigate to Help when index is 3
-    if (index == 3) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const HelpScreen()),
-      );
+  }
+
+  String _getScreenTitle() {
+    switch (_selectedIndex) {
+      case 0:
+        return 'Favourites';
+      case 1:
+        return 'My Orders';
+      case 2:
+        return 'Home';
+      case 3:
+        return 'Help & Support';
+      case 4:
+        return 'Settings';
+      default:
+        return 'Go Buddy';
     }
   }
 
@@ -106,8 +109,50 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: _buildAppBar(user),
-      body: _selectedIndex == 4 ? _buildSettingsPage() : _buildBody(),
+      body: _buildContentForIndex(),
       bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildContentForIndex() {
+    switch (_selectedIndex) {
+      case 0:
+        return _buildFavouritesPage(); // Favourites
+      case 1:
+        return MyOrdersScreen(); // My Orders
+      case 2:
+        return _buildBody(); // Home
+      case 3:
+        return const HelpScreen(); // Help
+      case 4:
+        return _buildSettingsPage(); // Settings
+      default:
+        return _buildBody();
+    }
+  }
+
+  Widget _buildFavouritesPage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.favorite_outline, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No favourites yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your favourite services will appear here',
+            style: TextStyle(color: Colors.grey[500]),
+          ),
+        ],
+      ),
     );
   }
 
@@ -236,8 +281,17 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       title: Row(
         children: [
           CircleAvatar(
+            radius: 20,
             backgroundColor: Colors.white,
-            child: Icon(Icons.person, color: AppTheme.primaryColor),
+            backgroundImage:
+                (user?.profilePicture != null &&
+                    user!.profilePicture!.isNotEmpty)
+                ? NetworkImage(user.profilePicture!)
+                : null,
+            child:
+                (user?.profilePicture == null || user!.profilePicture!.isEmpty)
+                ? Icon(Icons.person, color: AppTheme.primaryColor)
+                : null,
           ),
           const SizedBox(width: 12),
           Column(
@@ -252,7 +306,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 ),
               ),
               Text(
-                user?.phoneNumber ?? '',
+                _getScreenTitle(),
                 style: const TextStyle(fontSize: 12, color: Colors.white70),
               ),
             ],

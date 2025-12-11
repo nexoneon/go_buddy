@@ -2264,223 +2264,301 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   // --- End Services Management Section ---
 
   Widget _buildOrders() {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.white,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Orders',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              ElevatedButton.icon(
-                onPressed: () => setState(() {}),
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Refresh'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+    return DefaultTabController(
+      length: 6,
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Orders',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => setState(() {}),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Refresh'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('orders')
-                .orderBy('created_at', descending: true)
-                .limit(50)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
+          // Tab Bar
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              isScrollable: true,
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: Colors.grey[600],
+              indicatorColor: AppTheme.primaryColor,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(text: 'All Orders'),
+                Tab(text: 'Pending'),
+                Tab(text: 'In Progress'),
+                Tab(text: 'On Hold'),
+                Tab(text: 'Completed'),
+                Tab(text: 'Cancelled'),
+              ],
+            ),
+          ),
+          // Tab Views
+          Expanded(
+            child: TabBarView(
+              children: [
+                _buildOrdersTab(null), // All
+                _buildOrdersTab('pending'),
+                _buildOrdersTab('in_progress'),
+                _buildOrdersTab('hold'),
+                _buildOrdersTab('completed'),
+                _buildOrdersTab('cancelled'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+  Widget _buildOrdersTab(String? statusFilter) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .orderBy('created_at', descending: true)
+          .limit(100)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
 
-              final orders = snapshot.data?.docs ?? [];
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-              if (orders.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'No orders yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                );
-              }
+        var orders = snapshot.data?.docs ?? [];
 
-              return ListView.builder(
+        // Filter by status if specified
+        if (statusFilter != null) {
+          orders = orders.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['status'] == statusFilter;
+          }).toList();
+        }
+
+        if (orders.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  statusFilter == null
+                      ? 'No orders yet'
+                      : 'No ${statusFilter.replaceAll('_', ' ')} orders',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            final orderDoc = orders[index];
+            final order = orderDoc.data() as Map<String, dynamic>;
+            final currentStatus = OrderStatus.fromString(
+              order['status'] ?? 'pending',
+            );
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
                 padding: const EdgeInsets.all(16),
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  final orderDoc = orders[index];
-                  final order = orderDoc.data() as Map<String, dynamic>;
-                  final currentStatus = OrderStatus.fromString(
-                    order['status'] ?? 'pending',
-                  );
-
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Top row: Order number, service name, status
-                          Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top row: Order number, service name, status
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withAlpha(26),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '#${index + 1}',
+                              style: TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundColor: AppTheme.primaryColor,
+                              Text(
+                                order['service_name'] ?? 'Unknown Service',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${order['amount']?.toStringAsFixed(0) ?? '0'}',
+                                style: TextStyle(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Status dropdown
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(currentStatus).withAlpha(26),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _getStatusColor(currentStatus),
+                            ),
+                          ),
+                          child: DropdownButton<OrderStatus>(
+                            value: currentStatus,
+                            underline: const SizedBox(),
+                            isDense: true,
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: _getStatusColor(currentStatus),
+                              size: 20,
+                            ),
+                            items: OrderStatus.values.map((status) {
+                              return DropdownMenuItem(
+                                value: status,
                                 child: Text(
-                                  '${index + 1}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  status.displayName,
+                                  style: TextStyle(
+                                    color: _getStatusColor(status),
+                                    fontWeight: FontWeight.w600,
                                     fontSize: 12,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      order['service_name'] ??
-                                          'Unknown Service',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      '₹${order['amount']?.toStringAsFixed(0) ?? '0'}',
-                                      style: TextStyle(
-                                        color: AppTheme.primaryColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Status dropdown
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(
-                                    currentStatus,
-                                  ).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: _getStatusColor(currentStatus),
-                                  ),
-                                ),
-                                child: DropdownButton<OrderStatus>(
-                                  value: currentStatus,
-                                  underline: const SizedBox(),
-                                  isDense: true,
-                                  icon: Icon(
-                                    Icons.arrow_drop_down,
-                                    color: _getStatusColor(currentStatus),
-                                    size: 20,
-                                  ),
-                                  items: OrderStatus.values.map((status) {
-                                    return DropdownMenuItem(
-                                      value: status,
-                                      child: Text(
-                                        status.displayName,
-                                        style: TextStyle(
-                                          color: _getStatusColor(status),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (newStatus) async {
-                                    if (newStatus != null &&
-                                        newStatus != currentStatus) {
-                                      await FirebaseFirestore.instance
-                                          .collection('orders')
-                                          .doc(orderDoc.id)
-                                          .update({'status': newStatus.value});
+                              );
+                            }).toList(),
+                            onChanged: (newStatus) async {
+                              if (newStatus != null &&
+                                  newStatus != currentStatus) {
+                                await FirebaseFirestore.instance
+                                    .collection('orders')
+                                    .doc(orderDoc.id)
+                                    .update({'status': newStatus.value});
 
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Status: ${newStatus.displayName}',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                ),
-                              ),
-                            ],
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Status updated to ${newStatus.displayName}',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                           ),
-                          const Divider(height: 16),
-                          // Bottom row: Customer info
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.phone,
-                                size: 14,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                order['user_phone'] ?? 'No phone',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              const SizedBox(width: 16),
-                              const Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  order['booking_time'] ?? '',
-                                  style: const TextStyle(fontSize: 12),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              );
-            },
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    // Customer info row
+                    Row(
+                      children: [
+                        _buildOrderInfoChip(
+                          Icons.person,
+                          order['user_name'] ?? 'Unknown',
+                          Colors.blue,
+                        ),
+                        const SizedBox(width: 12),
+                        _buildOrderInfoChip(
+                          Icons.phone,
+                          order['user_phone'] ?? 'No phone',
+                          Colors.green,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildOrderInfoChip(
+                            Icons.calendar_today,
+                            order['booking_time'] ?? 'No time',
+                            Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildOrderInfoChip(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12, color: color),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -34,5 +34,11 @@ service firebase.storage {
     match /users/{userId}/{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Gallery folder - allow authenticated users to write
+    match /gallery/{fileName} {
+      allow write: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
   }
 }

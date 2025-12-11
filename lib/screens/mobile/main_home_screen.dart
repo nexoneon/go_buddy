@@ -7,6 +7,9 @@ import '../../services/service_service.dart';
 import '../../services/favourite_service.dart';
 import '../../models/category_model.dart';
 import '../../models/service_model.dart';
+import '../../models/gallery_image_model.dart';
+import '../../services/gallery_image_service.dart';
+import '../../widgets/auto_scroll_banner.dart'; // Import AutoScrollBanner
 import 'login_screen.dart';
 import 'service_listing_screen.dart';
 import 'service_detail_screen.dart';
@@ -30,6 +33,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   final CategoryService _categoryService = CategoryService();
   final ServiceService _serviceService = ServiceService();
   final FavouriteService _favouriteService = FavouriteService();
+  final GalleryImageService _galleryImageService =
+      GalleryImageService(); // Initialize Service
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int _selectedIndex = 2; // Home is selected by default
@@ -479,21 +484,41 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return SingleChildScrollView(
       child: Column(
         children: [
+          const SizedBox(height: 12),
           // Promotional Banner
           _buildPromoBanner(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           // Search Bar
           _buildSearchBar(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           // Service Categories
           _buildCategoryGrid(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 
   Widget _buildPromoBanner() {
+    return StreamBuilder<List<GalleryImageModel>>(
+      stream: _galleryImageService.getImages(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return _buildStaticPromoBanner();
+        }
+
+        final images = snapshot.data!;
+
+        // Use AutoScrollBanner with 3 seconds interval
+        return AutoScrollBanner(
+          images: images,
+          interval: const Duration(seconds: 3),
+        );
+      },
+    );
+  }
+
+  Widget _buildStaticPromoBanner() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -535,27 +560,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      '₹799/-',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withAlpha(204),
-                        decoration: TextDecoration.lineThrough,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'only at ₹599/-',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),

@@ -60,6 +60,27 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
       // Allow users to update their own orders (e.g. cancel) - optional for now
     }
+
+    // About Us collection rules - readable by all authenticated users
+    match /about_us/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+
+    // FAQs collection rules - readable by all authenticated users
+    match /faqs/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+
+    // Support collection rules - readable by all authenticated users
+    match /support/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
     
     // Admin users can read/write all documents
     match /{document=**} {

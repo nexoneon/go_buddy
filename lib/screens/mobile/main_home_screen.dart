@@ -10,6 +10,7 @@ import 'login_screen.dart';
 import 'service_listing_screen.dart';
 import 'my_orders_screen.dart';
 import 'profile_screen.dart';
+import 'help_screen.dart';
 
 /// Main Home Screen
 ///
@@ -87,6 +88,13 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => MyOrdersScreen()),
+      );
+    }
+    // Navigate to Help when index is 3
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HelpScreen()),
       );
     }
   }

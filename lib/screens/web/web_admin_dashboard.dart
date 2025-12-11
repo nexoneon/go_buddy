@@ -51,7 +51,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     'Users',
     'Images',
     'Help',
-    'Settings',
+    //'Settings',
   ];
 
   @override
@@ -119,7 +119,13 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             child: _isSidebarOpen
                 ? Container(
                     width: 260,
-                    color: const Color(0xFF1E293B),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                      ),
+                    ),
                     child: Column(
                       children: [
                         // Logo Header with close button for small screens
@@ -139,10 +145,10 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(
-                                  Icons.admin_panel_settings,
-                                  color: Colors.white,
-                                ),
+                                // child: const Icon(
+                                //   Icons.admin_panel_settings,
+                                //   color: Colors.white,
+                                // ),
                               ),
                               const SizedBox(width: 12),
                               const Expanded(
@@ -342,24 +348,28 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppTheme.primaryColor.withAlpha(51)
+            ? Colors.white.withAlpha(25) // Glass effect
             : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
+        border: isSelected ? Border.all(color: Colors.white24) : null,
       ),
       child: ListTile(
         leading: Icon(
           icon,
-          color: isSelected ? AppTheme.primaryColor : Colors.white70,
+          color: isSelected ? Colors.white : Colors.white70,
+          size: 22,
         ),
         title: Text(
           title,
           style: TextStyle(
             color: isSelected ? Colors.white : Colors.white70,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 14,
           ),
         ),
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       ),
     );
   }
@@ -380,8 +390,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         return Icons.image;
       case 6:
         return Icons.help_outline; // Help
-      case 7:
-        return Icons.settings;
+      // case 7:
+      //   return Icons.settings;
       default:
         return Icons.dashboard;
     }
@@ -403,8 +413,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         return _buildImages();
       case 6:
         return _buildHelp();
-      case 7:
-        return _buildSettings();
+      // case 7:
+      //   return _buildSettings();
       default:
         return _buildDashboard();
     }
@@ -622,16 +632,20 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     Color color,
   ) {
     return Container(
-      width: 140,
-      padding: const EdgeInsets.all(12),
+      width: 160,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withOpacity(0.8), color],
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(13),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: color.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -640,19 +654,32 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withAlpha(51),
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
             value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
           ),
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -4219,23 +4246,23 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     }
   }
 
-  Widget _buildSettings() {
-    return _buildComingSoon('Settings');
-  }
+  // Widget _buildSettings() {
+  //   return _buildComingSoon('Settings');
+  // }
 
-  Widget _buildComingSoon(String title) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.construction, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            '$title Coming Soon',
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildComingSoon(String title) {
+  //   return Center(
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: [
+  //         Icon(Icons.construction, size: 64, color: Colors.grey[400]),
+  //         const SizedBox(height: 16),
+  //         Text(
+  //           '$title Coming Soon',
+  //           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

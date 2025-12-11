@@ -41,13 +41,23 @@ class OrderService {
         });
   }
 
-  // Check if user has already booked a specific service
+  // Check if user has an active/ongoing booking for a specific service
+  // Returns true only if there's a pending, accepted, or in_progress order
   Stream<bool> hasUserBookedService(String userId, String serviceId) {
     return _ordersCollection
         .where('user_id', isEqualTo: userId)
         .where('service_id', isEqualTo: serviceId)
         .snapshots()
-        .map((snapshot) => snapshot.docs.isNotEmpty);
+        .map((snapshot) {
+          // Filter for active orders only (not completed or cancelled)
+          final activeOrders = snapshot.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final status = (data['status'] ?? '').toString().toLowerCase();
+            // Only consider these statuses as "active" bookings
+            return status != 'completed' && status != 'cancelled';
+          });
+          return activeOrders.isNotEmpty;
+        });
   }
 
   // Update order status

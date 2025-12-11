@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/order_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/order_service.dart';
+import '../../config/config.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -10,295 +11,445 @@ class MyOrdersScreen extends StatefulWidget {
   State<MyOrdersScreen> createState() => _MyOrdersScreenState();
 }
 
-class _MyOrdersScreenState extends State<MyOrdersScreen> {
+class _MyOrdersScreenState extends State<MyOrdersScreen>
+    with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final OrderService _orderService = OrderService();
-  int _selectedIndex = 1; // My Orders is index 1
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // Check if order is ongoing (not completed or cancelled)
+  bool _isOngoing(OrderModel order) {
+    final status = order.status.toLowerCase();
+    return status != 'completed' && status != 'cancelled';
+  }
+
+  // Check if order is completed
+  bool _isCompleted(OrderModel order) {
+    final status = order.status.toLowerCase();
+    return status == 'completed' || status == 'cancelled';
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
 
-    if (user == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('My Orders'),
-          backgroundColor: const Color(0xFF0D7377),
-          foregroundColor: Colors.white,
-        ),
-        body: const Center(child: Text('Please login to view orders')),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('My Orders'),
+        title: const Text(
+          'My Orders',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: const Color(0xFF0D7377),
         foregroundColor: Colors.white,
         elevation: 0,
-      ),
-      body: StreamBuilder<List<OrderModel>>(
-        stream: _orderService.getUserOrders(user.uid),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final orders = snapshot.data ?? [];
-
-          if (orders.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No orders yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your bookings will appear here',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                ],
+        actions: [
+          if (user == null)
+            TextButton(
+              onPressed: () {
+                // Navigate to login
+              },
+              child: const Text(
+                'LOGIN',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              return _buildOrderCard(order);
-            },
-          );
-        },
+            ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: const Color(0xFF0D7377),
+              unselectedLabelColor: Colors.grey[600],
+              indicatorColor: const Color(0xFF0D7377),
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+              tabs: const [
+                Tab(text: 'ON GOING'),
+                Tab(text: 'COMPLETED'),
+              ],
+            ),
+          ),
+        ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      body: user == null
+          ? _buildNotLoggedIn()
+          : StreamBuilder<List<OrderModel>>(
+              stream: _orderService.getUserOrders(user.uid),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final allOrders = snapshot.data ?? [];
+                final ongoingOrders = allOrders
+                    .where((o) => _isOngoing(o))
+                    .toList();
+                final completedOrders = allOrders
+                    .where((o) => _isCompleted(o))
+                    .toList();
+
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildOrdersList(ongoingOrders, isOngoing: true),
+                    _buildOrdersList(completedOrders, isOngoing: false),
+                  ],
+                );
+              },
+            ),
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(26),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+  Widget _buildNotLoggedIn() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D7377).withAlpha(26),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.login_outlined,
+              size: 60,
+              color: Color(0xFF0D7377),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Please login to view your orders',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Track and manage your bookings',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              // Navigate to login
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D7377),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Login Now',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            if (index != _selectedIndex) {
-              Navigator.pop(context); // Go back to home
-            }
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          selectedItemColor: const Color(0xFF0D7377),
-          unselectedItemColor: Colors.grey,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.favorite_border),
-              activeIcon: Icon(Icons.favorite),
-              label: 'Favourite',
+    );
+  }
+
+  Widget _buildOrdersList(List<OrderModel> orders, {required bool isOngoing}) {
+    if (orders.isEmpty) {
+      return _buildEmptyState(isOngoing: isOngoing);
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: orders.length,
+      itemBuilder: (context, index) {
+        return _buildOrderCard(orders[index]);
+      },
+    );
+  }
+
+  Widget _buildEmptyState({required bool isOngoing}) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag_outlined),
-              activeIcon: Icon(Icons.shopping_bag),
-              label: 'My Orders',
+            child: Icon(
+              isOngoing ? Icons.pending_actions_outlined : Icons.task_alt,
+              size: 60,
+              color: Colors.grey[400],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+          ),
+          const SizedBox(height: 24),
+          Text(
+            isOngoing ? 'No ongoing orders' : 'No completed orders',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.help_outline),
-              activeIcon: Icon(Icons.help),
-              label: 'Help',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isOngoing
+                ? 'Your active bookings will appear here'
+                : 'Your completed bookings will appear here',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildOrderCard(OrderModel order) {
-    Color statusColor;
-    switch (order.status.toLowerCase()) {
-      case 'completed':
-        statusColor = Colors.green;
-        break;
-      case 'cancelled':
-        statusColor = Colors.red;
-        break;
-      case 'confirmed':
-      case 'accepted':
-        statusColor = Colors.blue;
-        break;
-      case 'in_progress':
-        statusColor = Colors.purple;
-        break;
-      case 'hold':
-        statusColor = Colors.amber;
-        break;
-      default:
-        statusColor = Colors.orange;
-    }
+    final statusInfo = _getStatusInfo(order.status);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(13),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header with status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: statusInfo.color.withAlpha(15),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: order.serviceImageUrl.isNotEmpty
-                      ? Image.network(
-                          order.serviceImageUrl,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.image_not_supported),
-                          ),
-                        )
-                      : Container(
-                          width: 60,
-                          height: 60,
-                          color: Colors.grey[200],
-                          child: const Icon(Icons.image_not_supported),
-                        ),
+                Icon(statusInfo.icon, color: statusInfo.color, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  statusInfo.label,
+                  style: TextStyle(
+                    color: statusInfo.color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        order.serviceName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                const Spacer(),
+                Text(
+                  '#${order.id.substring(0, 8).toUpperCase()}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Order content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Service icon
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D7377).withAlpha(26),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '₹${order.amount.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF0D7377),
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: const Icon(
+                        Icons.build_outlined,
+                        color: Color(0xFF0D7377),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order.serviceName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '₹${order.amount.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Info row
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildInfoRow(
+                        icon: Icons.calendar_today_outlined,
+                        label: 'Date',
+                        value:
+                            '${order.bookingDate.day}/${order.bookingDate.month}/${order.bookingDate.year}',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow(
+                        icon: Icons.access_time,
+                        label: 'Time',
+                        value: order.bookingTime,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow(
+                        icon: Icons.location_on_outlined,
+                        label: 'Address',
+                        value: order.address,
+                        isExpandable: true,
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    order.status.toUpperCase().replaceAll('_', ' '),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  '${order.bookingDate.day}/${order.bookingDate.month}/${order.bookingDate.year}',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(width: 16),
-                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  order.bookingTime,
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    order.address,
-                    style: TextStyle(color: Colors.grey[600]),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isExpandable = false,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[600]),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: TextStyle(color: Colors.grey[600], fontSize: 13),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+            maxLines: isExpandable ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  _StatusInfo _getStatusInfo(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return _StatusInfo(
+          color: Colors.green,
+          icon: Icons.check_circle,
+          label: 'Completed',
+        );
+      case 'cancelled':
+        return _StatusInfo(
+          color: Colors.red,
+          icon: Icons.cancel,
+          label: 'Cancelled',
+        );
+      case 'confirmed':
+      case 'accepted':
+        return _StatusInfo(
+          color: Colors.blue,
+          icon: Icons.thumb_up,
+          label: 'Confirmed',
+        );
+      case 'in_progress':
+        return _StatusInfo(
+          color: Colors.purple,
+          icon: Icons.directions_run,
+          label: 'In Progress',
+        );
+      case 'hold':
+        return _StatusInfo(
+          color: Colors.amber,
+          icon: Icons.pause_circle,
+          label: 'On Hold',
+        );
+      default:
+        return _StatusInfo(
+          color: Colors.orange,
+          icon: Icons.pending,
+          label: 'Pending',
+        );
+    }
+  }
+}
+
+class _StatusInfo {
+  final Color color;
+  final IconData icon;
+  final String label;
+
+  _StatusInfo({required this.color, required this.icon, required this.label});
 }

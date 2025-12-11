@@ -4,10 +4,12 @@ import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../../services/category_service.dart';
 import '../../services/service_service.dart';
+import '../../services/favourite_service.dart';
 import '../../models/category_model.dart';
 import '../../models/service_model.dart';
 import 'login_screen.dart';
 import 'service_listing_screen.dart';
+import 'service_detail_screen.dart';
 import 'my_orders_screen.dart';
 import 'profile_screen.dart';
 import 'help_screen.dart';
@@ -27,6 +29,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   final UserService _userService = UserService();
   final CategoryService _categoryService = CategoryService();
   final ServiceService _serviceService = ServiceService();
+  final FavouriteService _favouriteService = FavouriteService();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int _selectedIndex = 2; // Home is selected by default
@@ -132,26 +135,168 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 
   Widget _buildFavouritesPage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.favorite_outline, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            'No favourites yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+    final user = _userService.currentUser;
+
+    if (user == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite_outline, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Login to view favourites',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
             ),
+          ],
+        ),
+      );
+    }
+
+    return StreamBuilder<List<ServiceModel>>(
+      stream: _favouriteService.getFavouriteServices(user.uid),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final favourites = snapshot.data ?? [];
+
+        if (favourites.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.favorite_outline, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'No favourites yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tap the heart icon on any service to add it here',
+                  style: TextStyle(color: Colors.grey[500]),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: favourites.length,
+          itemBuilder: (context, index) {
+            final service = favourites[index];
+            return _buildFavouriteCard(service, user.uid);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFavouriteCard(ServiceModel service, String userId) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ServiceDetailScreen(service: service),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Service Image/Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withAlpha(26),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.build_outlined,
+                  color: AppTheme.primaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Service Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      service.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      service.note ?? '',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '₹${service.price.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Remove from favourites button
+              IconButton(
+                onPressed: () async {
+                  await _favouriteService.removeFromFavourites(
+                    userId,
+                    service.id,
+                  );
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Removed from favourites'),
+                        backgroundColor: Colors.orange,
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.favorite, color: Colors.red, size: 28),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Your favourite services will appear here',
-            style: TextStyle(color: Colors.grey[500]),
-          ),
-        ],
+        ),
       ),
     );
   }

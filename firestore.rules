@@ -38,6 +38,11 @@ service cloud.firestore {
       // Allow listing/querying users collection for admin login verification
       // This allows checking phone_number and is_superuser before OTP
       allow list: if true;
+      
+      // Favourites subcollection - users can only access their own favourites
+      match /favourites/{favouriteId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Services collection rules

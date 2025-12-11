@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 import '../../services/service_service.dart';
 import '../../services/user_service.dart';
+import '../../services/favourite_service.dart';
 import '../../config/config.dart';
 import 'service_detail_screen.dart';
 
@@ -22,6 +23,7 @@ class ServiceListingScreen extends StatefulWidget {
 class _ServiceListingScreenState extends State<ServiceListingScreen> {
   final ServiceService _serviceService = ServiceService();
   final UserService _userService = UserService();
+  final FavouriteService _favouriteService = FavouriteService();
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +114,8 @@ class _ServiceListingScreenState extends State<ServiceListingScreen> {
   }
 
   Widget _buildServiceCard(ServiceModel service) {
+    final user = _userService.currentUser;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -161,8 +165,45 @@ class _ServiceListingScreenState extends State<ServiceListingScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (service.isFavourite)
-                          const Icon(Icons.star, color: Colors.amber, size: 20),
+                        // Favourite button
+                        if (user != null)
+                          StreamBuilder<bool>(
+                            stream: _favouriteService.isFavouriteStream(
+                              user.uid,
+                              service.id,
+                            ),
+                            builder: (context, snapshot) {
+                              final isFavourite = snapshot.data ?? false;
+                              return GestureDetector(
+                                onTap: () async {
+                                  final added = await _favouriteService
+                                      .toggleFavourite(user.uid, service);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          added
+                                              ? 'Added to favourites'
+                                              : 'Removed from favourites',
+                                        ),
+                                        backgroundColor: added
+                                            ? Colors.green
+                                            : Colors.orange,
+                                        duration: const Duration(seconds: 1),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Icon(
+                                  isFavourite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavourite ? Colors.red : Colors.grey,
+                                  size: 24,
+                                ),
+                              );
+                            },
+                          ),
                       ],
                     ),
                     const SizedBox(height: 4),

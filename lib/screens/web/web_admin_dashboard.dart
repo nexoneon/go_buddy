@@ -1412,30 +1412,18 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // Service Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: 60,
-                height: 60,
-                color: Colors.grey[100],
-                child: service.imageUrl.isNotEmpty
-                    ? Image.network(
-                        service.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.broken_image,
-                            color: Colors.grey,
-                            size: 24,
-                          );
-                        },
-                      )
-                    : const Icon(
-                        Icons.image_not_supported_outlined,
-                        size: 24,
-                        color: Colors.grey,
-                      ),
+            // Service Icon
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withAlpha(26),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.build_outlined,
+                color: AppTheme.primaryColor,
+                size: 28,
               ),
             ),
             const SizedBox(width: 12),
@@ -1458,49 +1446,28 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                         ),
                       ),
                       if (service.isFavourite)
-                        const Icon(Icons.favorite, color: Colors.red, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      if (service.accept)
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 16,
+                        )
+                      else
+                        const Icon(Icons.cancel, color: Colors.red, size: 16),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          service.type,
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       Text(
                         '₹${service.price.toStringAsFixed(0)}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                          color: Color(0xFF0D7377),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.shopping_bag_outlined,
-                        size: 12,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '${service.orderCount}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
                       ),
                     ],
                   ),
@@ -1532,344 +1499,720 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   void _showAddEditServiceDialog({ServiceModel? service}) {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: service?.name ?? '');
-    final imageUrlController = TextEditingController(
-      text: service?.imageUrl ?? '',
-    );
     final priceController = TextEditingController(
       text: service?.price.toString() ?? '',
     );
-    final typeController = TextEditingController(text: service?.type ?? '');
-    final orderCountController = TextEditingController(
-      text: service?.orderCount.toString() ?? '0',
+    final customerResponsibilityController = TextEditingController(
+      text: service?.customerResponsibility ?? '',
     );
+    final providerResponsibilityController = TextEditingController(
+      text: service?.providerResponsibility ?? '',
+    );
+    final noteController = TextEditingController(text: service?.note ?? '');
+    final goBuddyCaresController = TextEditingController(
+      text: service?.goBuddyCares ?? '',
+    );
+
     bool isFavourite = service?.isFavourite ?? false;
+    bool acceptService = service?.accept ?? true;
     String? selectedCategoryId = service?.categoryId.isNotEmpty == true
         ? service!.categoryId
         : null;
-    // Uint8List? webImage;
-    bool isUploading = false;
+    bool isSaving = false;
+    int currentStep = 0;
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          // Future<void> pickImage() async {
-          //   try {
-          //     final ImagePicker picker = ImagePicker();
-          //     final XFile? image = await picker.pickImage(
-          //       source: ImageSource.gallery,
-          //     );
-          //     if (image != null) {
-          //       final bytes = await image.readAsBytes();
-          //       setState(() {
-          //         webImage = bytes;
-          //         imageUrlController.text = 'Uploading...';
-          //       });
-          //     }
-          //   } catch (e) {
-          //     debugPrint('Error picking image: $e');
-          //   }
-          // }
+          Widget buildSectionHeader(String title, IconData icon, Color color) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withAlpha(30),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: color, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
 
-          // Future<String?> uploadImage(String serviceName) async {
-          //   if (webImage == null) return null;
-          //   try {
-          //     final fileName =
-          //         '${serviceName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          //     final ref = FirebaseStorage.instance
-          //         .ref()
-          //         .child('service_images')
-          //         .child(fileName);
+          InputDecoration buildInputDecoration(
+            String label,
+            String hint,
+            IconData icon,
+          ) {
+            return InputDecoration(
+              labelText: label,
+              hintText: hint,
+              prefixIcon: Icon(icon, color: Colors.grey[600], size: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF0D7377),
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            );
+          }
 
-          //     final metadata = SettableMetadata(contentType: 'image/jpeg');
-          //     await ref.putData(webImage!, metadata);
-          //     final url = await ref.getDownloadURL();
-          //     return url;
-          //   } catch (e) {
-          //     debugPrint('Error uploading image: $e');
-          //     return null;
-          //   }
-          // }
-
-          return AlertDialog(
-            title: Text(service == null ? 'Add Service' : 'Edit Service'),
-            content: SizedBox(
-              width: 500,
-              child: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Image Preview & Upload (Commented Out)
-                      /*
-                      GestureDetector(
-                        onTap: pickImage,
-                        child: Container(
-                          height: 150,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[400]!),
-                            image:
-                                webImage != null
-                                    ? DecorationImage(
-                                      image: MemoryImage(webImage!),
-                                      fit: BoxFit.cover,
-                                    )
-                                    : (imageUrlController.text.isNotEmpty &&
-                                            !imageUrlController.text.startsWith(
-                                              'Uploading',
-                                            )
-                                        ? DecorationImage(
-                                          image: NetworkImage(
-                                            imageUrlController.text,
-                                          ),
-                                          fit: BoxFit.cover,
-                                        )
-                                        : null),
-                          ),
-                          child:
-                              webImage == null &&
-                                      imageUrlController.text.isEmpty
-                                  ? const Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.add_photo_alternate,
-                                        size: 40,
-                                        color: Colors.grey,
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        'Click to upload image',
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                    ],
-                                  )
-                                  : null,
+          Widget buildBasicInfoStep() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildSectionHeader(
+                  'Basic Information',
+                  Icons.info_outline,
+                  const Color(0xFF0D7377),
+                ),
+                TextFormField(
+                  controller: nameController,
+                  decoration: buildInputDecoration(
+                    'Service Name',
+                    'e.g. AC Repair',
+                    Icons.build_outlined,
+                  ),
+                  validator: (v) =>
+                      v?.isEmpty == true ? 'Name is required' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: priceController,
+                  decoration: InputDecoration(
+                    labelText: 'Price',
+                    hintText: 'Enter price',
+                    prefixIcon: Container(
+                      width: 48,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        '₹',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0D7377),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      */
-                      TextFormField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Service Name',
-                          hintText: 'e.g. AC Repair',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (v) =>
-                            v?.isEmpty == true ? 'Name is required' : null,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF0D7377),
+                        width: 2,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: imageUrlController,
-                        decoration: const InputDecoration(
-                          labelText: 'Image URL',
-                          hintText: 'https://...',
-                          border: OutlineInputBorder(),
-                        ),
-                        // validator: (v) => v?.isEmpty == true ? 'Image URL is required' : null,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (v) =>
+                      v?.isEmpty == true ? 'Price is required' : null,
+                ),
+                const SizedBox(height: 16),
+                StreamBuilder<List<CategoryModel>>(
+                  stream: _categoryService.getAllCategories(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final categories = snapshot.data!;
+                    return DropdownButtonFormField<String>(
+                      value: categories.any((c) => c.id == selectedCategoryId)
+                          ? selectedCategoryId
+                          : null,
+                      decoration: buildInputDecoration(
+                        'Category',
+                        'Select category',
+                        Icons.category_outlined,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: priceController,
-                        decoration: const InputDecoration(
-                          labelText: 'Price (₹)',
-                          hintText: 'e.g. 599',
-                          border: OutlineInputBorder(),
-                          prefixText: '₹ ',
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (v) =>
-                            v?.isEmpty == true ? 'Price is required' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      // Category Dropdown
-                      StreamBuilder<List<CategoryModel>>(
-                        stream: _categoryService.getAllCategories(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Padding(
-                              padding: EdgeInsets.only(bottom: 16),
-                              child: LinearProgressIndicator(),
-                            );
-                          }
-                          final categories = snapshot.data!;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: DropdownButtonFormField<String>(
-                              value:
-                                  categories.any(
-                                    (c) => c.id == selectedCategoryId,
-                                  )
-                                  ? selectedCategoryId
-                                  : null,
-                              decoration: const InputDecoration(
-                                labelText: 'Category',
-                                border: OutlineInputBorder(),
+                      items: categories.map((category) {
+                        return DropdownMenuItem(
+                          value: category.id,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Color(category.color),
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                              items: categories.map((category) {
-                                return DropdownMenuItem(
-                                  value: category.id,
-                                  child: Text(category.name),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                setState(() {
-                                  selectedCategoryId = val;
-                                });
-                              },
-                              validator: (v) =>
-                                  v == null ? 'Category is required' : null,
-                            ),
-                          );
-                        },
-                      ),
-                      TextFormField(
-                        controller: typeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Service Type (Tag)',
-                          hintText: 'e.g. Cleaning',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (v) =>
-                            v?.isEmpty == true ? 'Type is required' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: orderCountController,
-                        decoration: const InputDecoration(
-                          labelText: 'Initial Order Count',
-                          hintText: 'e.g. 0',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                              const SizedBox(width: 10),
+                              Text(category.name),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) =>
+                          setState(() => selectedCategoryId = val),
+                      validator: (v) =>
+                          v == null ? 'Category is required' : null,
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                buildSectionHeader(
+                  'Service Status',
+                  Icons.toggle_on_outlined,
+                  Colors.green,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: Column(
+                    children: [
                       SwitchListTile(
-                        title: const Text('Mark as Favourite'),
+                        title: const Text(
+                          'Featured Service',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        subtitle: const Text(
+                          'Show in featured section',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        secondary: Icon(
+                          Icons.star,
+                          color: isFavourite ? Colors.amber : Colors.grey,
+                        ),
                         value: isFavourite,
+                        activeColor: Colors.amber,
                         onChanged: (val) => setState(() => isFavourite = val),
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile(
+                        title: const Text(
+                          'Accept Orders',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        subtitle: const Text(
+                          'Enable to accept bookings',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        secondary: Icon(
+                          Icons.check_circle,
+                          color: acceptService ? Colors.green : Colors.grey,
+                        ),
+                        value: acceptService,
+                        activeColor: Colors.green,
+                        onChanged: (val) => setState(() => acceptService = val),
                       ),
                     ],
                   ),
                 ),
+              ],
+            );
+          }
+
+          Widget buildDetailsStep() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildSectionHeader(
+                  'Customer Responsibility',
+                  Icons.person_outline,
+                  Colors.blue,
+                ),
+                TextFormField(
+                  controller: customerResponsibilityController,
+                  decoration: InputDecoration(
+                    hintText: 'What the customer should prepare or provide...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.blue,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.blue.withAlpha(10),
+                  ),
+                  maxLines: 3,
+                  maxLength: 500,
+                ),
+                const SizedBox(height: 16),
+                buildSectionHeader(
+                  'Provider Responsibility',
+                  Icons.engineering_outlined,
+                  Colors.orange,
+                ),
+                TextFormField(
+                  controller: providerResponsibilityController,
+                  decoration: InputDecoration(
+                    hintText: 'What the service provider will do...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.orange,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.orange.withAlpha(10),
+                  ),
+                  maxLines: 3,
+                  maxLength: 500,
+                ),
+                const SizedBox(height: 16),
+                buildSectionHeader(
+                  'Notes & Terms',
+                  Icons.note_alt_outlined,
+                  Colors.purple,
+                ),
+                TextFormField(
+                  controller: noteController,
+                  decoration: InputDecoration(
+                    hintText: 'Any additional notes or terms...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.purple,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.purple.withAlpha(10),
+                  ),
+                  maxLines: 3,
+                  maxLength: 500,
+                ),
+                const SizedBox(height: 16),
+                buildSectionHeader(
+                  'GoBuddy Cares',
+                  Icons.favorite_outline,
+                  const Color(0xFF0D7377),
+                ),
+                TextFormField(
+                  controller: goBuddyCaresController,
+                  decoration: InputDecoration(
+                    hintText: 'Special care or benefits from GoBuddy...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF0D7377),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFF0D7377).withAlpha(10),
+                  ),
+                  maxLines: 3,
+                  maxLength: 500,
+                ),
+              ],
+            );
+          }
+
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Container(
+              width: 600,
+              constraints: const BoxConstraints(maxHeight: 700),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header with gradient
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF0D7377), Color(0xFF14919B)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(50),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            service == null
+                                ? Icons.add_circle_outline
+                                : Icons.edit_outlined,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                service == null
+                                    ? 'Add New Service'
+                                    : 'Edit Service',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                service == null
+                                    ? 'Create a new service for your customers'
+                                    : 'Update service details',
+                                style: TextStyle(
+                                  color: Colors.white.withAlpha(200),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Step indicators
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setState(() => currentStep = 0),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: currentStep == 0
+                                    ? const Color(0xFF0D7377)
+                                    : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: currentStep == 0
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Basic Info',
+                                    style: TextStyle(
+                                      color: currentStep == 0
+                                          ? Colors.white
+                                          : Colors.grey[600],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setState(() => currentStep = 1),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: currentStep == 1
+                                    ? const Color(0xFF0D7377)
+                                    : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.description_outlined,
+                                    color: currentStep == 1
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Details',
+                                    style: TextStyle(
+                                      color: currentStep == 1
+                                          ? Colors.white
+                                          : Colors.grey[600],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Form content
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                      child: Form(
+                        key: formKey,
+                        child: currentStep == 0
+                            ? buildBasicInfoStep()
+                            : buildDetailsStep(),
+                      ),
+                    ),
+                  ),
+                  // Footer actions
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
+                      border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                    ),
+                    child: Row(
+                      children: [
+                        if (currentStep > 0)
+                          TextButton.icon(
+                            onPressed: () => setState(() => currentStep--),
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Back'),
+                          ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: isSaving
+                              ? null
+                              : () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 12),
+                        if (currentStep < 1)
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (formKey.currentState!.validate()) {
+                                setState(() => currentStep++);
+                              }
+                            },
+                            icon: const Icon(Icons.arrow_forward, size: 18),
+                            label: const Text('Next'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0D7377),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          )
+                        else
+                          ElevatedButton.icon(
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    if (formKey.currentState!.validate()) {
+                                      setState(() => isSaving = true);
+
+                                      final newService = ServiceModel(
+                                        id: service?.id ?? '',
+                                        name: nameController.text.trim(),
+                                        price: double.parse(
+                                          priceController.text.trim(),
+                                        ),
+                                        categoryId: selectedCategoryId ?? '',
+                                        isFavourite: isFavourite,
+                                        customerResponsibility:
+                                            customerResponsibilityController
+                                                .text
+                                                .trim()
+                                                .isNotEmpty
+                                            ? customerResponsibilityController
+                                                  .text
+                                                  .trim()
+                                            : null,
+                                        providerResponsibility:
+                                            providerResponsibilityController
+                                                .text
+                                                .trim()
+                                                .isNotEmpty
+                                            ? providerResponsibilityController
+                                                  .text
+                                                  .trim()
+                                            : null,
+                                        note:
+                                            noteController.text
+                                                .trim()
+                                                .isNotEmpty
+                                            ? noteController.text.trim()
+                                            : null,
+                                        goBuddyCares:
+                                            goBuddyCaresController.text
+                                                .trim()
+                                                .isNotEmpty
+                                            ? goBuddyCaresController.text.trim()
+                                            : null,
+                                        accept: acceptService,
+                                      );
+
+                                      try {
+                                        if (service == null) {
+                                          await FirebaseFirestore.instance
+                                              .collection('services')
+                                              .add(newService.toFirestore());
+                                        } else {
+                                          await FirebaseFirestore.instance
+                                              .collection('services')
+                                              .doc(service.id)
+                                              .update(newService.toFirestore());
+                                        }
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                service == null
+                                                    ? 'Service added successfully!'
+                                                    : 'Service updated successfully!',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      } finally {
+                                        if (context.mounted) {
+                                          setState(() => isSaving = false);
+                                        }
+                                      }
+                                    }
+                                  },
+                            icon: isSaving
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.save_outlined, size: 18),
+                            label: Text(
+                              service == null
+                                  ? 'Create Service'
+                                  : 'Save Changes',
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: isUploading ? null : () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: isUploading
-                    ? null
-                    : () async {
-                        if (formKey.currentState!.validate()) {
-                          setState(() => isUploading = true);
-                          String imageUrl = imageUrlController.text;
-
-                          // Image upload logic commented out
-                          /*
-                            if (webImage != null) {
-                              final url = await uploadImage(
-                                nameController.text.trim(),
-                              );
-                              if (url != null) {
-                                imageUrl = url;
-                              } else {
-                                setState(() => isUploading = false);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Failed to upload image'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                                return;
-                              }
-                            } else if (imageUrl.isEmpty || imageUrl == 'Uploading...') {
-                               setState(() => isUploading = false);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please select an image'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                                return;
-                            }
-                            */
-
-                          final newService = ServiceModel(
-                            id: service?.id ?? '',
-                            name: nameController.text.trim(),
-                            imageUrl: imageUrl,
-                            price: double.parse(priceController.text.trim()),
-                            type: typeController.text.trim(),
-                            categoryId: selectedCategoryId ?? '',
-                            orderCount: int.parse(
-                              orderCountController.text.trim(),
-                            ),
-                            isFavourite: isFavourite,
-                          );
-
-                          try {
-                            if (service == null) {
-                              // Create
-                              await FirebaseFirestore.instance
-                                  .collection('services')
-                                  .add(newService.toFirestore());
-                            } else {
-                              // Update
-                              await FirebaseFirestore.instance
-                                  .collection('services')
-                                  .doc(service.id)
-                                  .update(newService.toFirestore());
-                            }
-                            if (context.mounted) Navigator.pop(context);
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          } finally {
-                            if (context.mounted) {
-                              setState(() => isUploading = false);
-                            }
-                          }
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                ),
-                child: isUploading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(service == null ? 'Add Service' : 'Save Changes'),
-              ),
-            ],
           );
         },
       ),

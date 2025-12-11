@@ -3,24 +3,30 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ServiceModel {
   final String id;
   final String name;
-  final String imageUrl;
   final double price;
-  final String type;
   final String categoryId;
   final bool isFavourite;
-  final int orderCount;
   final bool isActive;
+
+  // Additional information fields
+  final String? customerResponsibility;
+  final String? providerResponsibility;
+  final String? note;
+  final String? goBuddyCares;
+  final bool accept;
 
   ServiceModel({
     required this.id,
     required this.name,
-    required this.imageUrl,
     required this.price,
-    required this.type,
     this.categoryId = '',
     this.isFavourite = false,
-    this.orderCount = 0,
     this.isActive = true,
+    this.customerResponsibility,
+    this.providerResponsibility,
+    this.note,
+    this.goBuddyCares,
+    this.accept = true,
   });
 
   factory ServiceModel.fromFirestore(DocumentSnapshot doc) {
@@ -28,50 +34,60 @@ class ServiceModel {
     return ServiceModel(
       id: doc.id,
       name: data['name'] ?? '',
-      imageUrl: data['image_url'] ?? '',
       price: (data['price'] ?? 0.0).toDouble(),
-      type: data['type'] ?? '',
       categoryId: data['category_id'] ?? '',
       isFavourite: data['is_favourite'] ?? false,
-      orderCount: data['order_count'] ?? 0,
       isActive: data['is_active'] ?? true,
+      customerResponsibility: data['customer_responsibility'],
+      providerResponsibility: data['provider_responsibility'],
+      note: data['note'],
+      goBuddyCares: data['go_buddy_cares'],
+      accept: data['accept'] ?? true,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
-      'image_url': imageUrl,
       'price': price,
-      'type': type,
       'category_id': categoryId,
       'is_favourite': isFavourite,
-      'order_count': orderCount,
       'is_active': isActive,
+      'customer_responsibility': customerResponsibility,
+      'provider_responsibility': providerResponsibility,
+      'note': note,
+      'go_buddy_cares': goBuddyCares,
+      'accept': accept,
     };
   }
 
   ServiceModel copyWith({
     String? id,
     String? name,
-    String? imageUrl,
     double? price,
-    String? type,
     String? categoryId,
     bool? isFavourite,
-    int? orderCount,
     bool? isActive,
+    String? customerResponsibility,
+    String? providerResponsibility,
+    String? note,
+    String? goBuddyCares,
+    bool? accept,
   }) {
     return ServiceModel(
       id: id ?? this.id,
       name: name ?? this.name,
-      imageUrl: imageUrl ?? this.imageUrl,
       price: price ?? this.price,
-      type: type ?? this.type,
       categoryId: categoryId ?? this.categoryId,
       isFavourite: isFavourite ?? this.isFavourite,
-      orderCount: orderCount ?? this.orderCount,
       isActive: isActive ?? this.isActive,
+      customerResponsibility:
+          customerResponsibility ?? this.customerResponsibility,
+      providerResponsibility:
+          providerResponsibility ?? this.providerResponsibility,
+      note: note ?? this.note,
+      goBuddyCares: goBuddyCares ?? this.goBuddyCares,
+      accept: accept ?? this.accept,
     );
   }
 }

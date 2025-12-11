@@ -294,7 +294,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                     userId: user.uid,
                                     serviceId: widget.service.id,
                                     serviceName: widget.service.name,
-                                    serviceImageUrl: widget.service.imageUrl,
+                                    serviceImageUrl: '',
                                     amount: widget.service.price,
                                     status: 'pending',
                                     bookingDate: selectedDate!,
@@ -385,27 +385,22 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             expandedHeight: 250,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: service.imageUrl.isNotEmpty
-                  ? Image.network(
-                      service.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  : Container(
-                      color: Colors.grey[200],
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [const Color(0xFF0D7377), const Color(0xFF14919B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.build_outlined,
+                    size: 80,
+                    color: Colors.white54,
+                  ),
+                ),
+              ),
             ),
           ),
           SliverToBoxAdapter(
@@ -437,22 +432,70 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      service.type,
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w500,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: service.accept
+                              ? Colors.green.withAlpha(26)
+                              : Colors.red.withAlpha(26),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              service.accept
+                                  ? Icons.check_circle
+                                  : Icons.cancel,
+                              color: service.accept ? Colors.green : Colors.red,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              service.accept ? 'Available' : 'Unavailable',
+                              style: TextStyle(
+                                color: service.accept
+                                    ? Colors.green
+                                    : Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      if (service.isFavourite) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withAlpha(26),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.star, color: Colors.amber, size: 16),
+                              SizedBox(width: 4),
+                              Text(
+                                'Featured',
+                                style: TextStyle(
+                                  color: Colors.amber,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -490,7 +533,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       child: const Icon(Icons.star, color: Colors.orange),
                     ),
                     title: const Text('4.8 Rating'),
-                    subtitle: Text('${service.orderCount} bookings'),
+                    subtitle: const Text('Popular service'),
                   ),
                 ],
               ),

@@ -92,24 +92,18 @@ class _ServiceListingScreenState extends State<ServiceListingScreen> {
         },
         child: Row(
           children: [
-            // Image
-            SizedBox(
-              width: 120,
-              height: 120,
-              child: service.imageUrl.isNotEmpty
-                  ? Image.network(
-                      service.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Center(
-                        child: Icon(Icons.broken_image, color: Colors.grey),
-                      ),
-                    )
-                  : const Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey,
-                      ),
-                    ),
+            // Service Icon
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withAlpha(26),
+              ),
+              child: Icon(
+                Icons.build_outlined,
+                color: AppTheme.primaryColor,
+                size: 40,
+              ),
             ),
             Expanded(
               child: Padding(
@@ -132,21 +126,27 @@ class _ServiceListingScreenState extends State<ServiceListingScreen> {
                           ),
                         ),
                         if (service.isFavourite)
-                          const Icon(
-                            Icons.favorite,
-                            color: Colors.red,
-                            size: 20,
-                          ),
+                          const Icon(Icons.star, color: Colors.amber, size: 20),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      service.type,
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      children: [
+                        Icon(
+                          service.accept ? Icons.check_circle : Icons.cancel,
+                          color: service.accept ? Colors.green : Colors.red,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          service.accept ? 'Available' : 'Unavailable',
+                          style: TextStyle(
+                            color: service.accept ? Colors.green : Colors.red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -154,29 +154,31 @@ class _ServiceListingScreenState extends State<ServiceListingScreen> {
                       children: [
                         Text(
                           '₹${service.price.toStringAsFixed(0)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Book',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                        if (service.accept)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Book',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ],

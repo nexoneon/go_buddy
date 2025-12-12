@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665057026086",
+    "project_id": "payservices-7827a",
+    "storage_bucket": "payservices-7827a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665057026086:android:de3cb0052a416d5aafc6e7",
+        "android_client_info": {
+          "package_name": "com.example.go_buddy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqGoqjBWGSDwbvfGtr9jV2ELGJgZ9l9mU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

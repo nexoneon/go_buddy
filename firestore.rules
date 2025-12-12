@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      // Allow users to read their own data
+      allow read: if isOwner(userId);
+      
+      // Allow users to create their own document
+      allow create: if isOwner(userId) 
+                    && request.resource.data.phone_number is string
+                    && request.resource.data.is_active == true
+                    && request.resource.data.is_staff == false
+                    && request.resource.data.is_superuser == false;
+      
+      // Allow users to update their own data
+      // But prevent them from changing security flags
+      allow update: if isOwner(userId)
+                    && request.resource.data.is_active == resource.data.is_active
+                    && request.resource.data.is_staff == resource.data.is_staff
+                    && request.resource.data.is_superuser == resource.data.is_superuser;
+      
+      // Allow users to delete their own account
+      allow delete: if isOwner(userId);
+      
+      // Allow listing/querying users collection for admin login verification
+      // This allows checking phone_number and is_superuser before OTP
+      allow list: if true;
+      
+      // Favourites subcollection - users can only access their own favourites
+      match /favourites/{favouriteId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Services collection rules
+    match /services/{serviceId} {
+      // Allow any authenticated user to read services
+      allow read: if isAuthenticated();
+    }
+
+    // Categories collection rules
+    match /categories/{categoryId} {
+      // Allow any authenticated user to read categories
+      allow read: if isAuthenticated();
+    }
+
+    // Orders collection rules
+    match /orders/{orderId} {
+      // Allow users to create orders
+      allow create: if isAuthenticated();
+      // Allow users to read their own orders
+      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      // Allow users to update their own orders (e.g. cancel) - optional for now
+    }
+
+    // About Us collection rules - readable by all authenticated users
+    match /about_us/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+
+    // FAQs collection rules - readable by all authenticated users
+    match /faqs/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+
+    // Support collection rules - readable by all authenticated users
+    match /support/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+
+    // Gallery Images collection rules - readable by all authenticated users
+    match /gallery_images/{imageId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+    
+    // Admin users can read/write all documents
+    match /{document=**} {
+      allow read, write: if isAuthenticated() 
+                         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+  }
+}

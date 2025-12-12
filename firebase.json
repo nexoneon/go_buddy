@@ -1,0 +1,46 @@
+{
+    "hosting": {
+        "public": "build/web",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "**",
+                "destination": "/index.html"
+            }
+        ]
+    },
+    "firestore": {
+        "rules": "firestore.rules",
+        "indexes": "firestore.indexes.json"
+    },
+    "storage": {
+        "rules": "storage.rules"
+    },
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "payservices-7827a",
+                    "appId": "1:665057026086:android:de3cb0052a416d5aafc6e7",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "payservices-7827a",
+                    "configurations": {
+                        "android": "1:665057026086:android:de3cb0052a416d5aafc6e7",
+                        "ios": "1:665057026086:ios:c720119e0a5fb630afc6e7",
+                        "macos": "1:665057026086:ios:c720119e0a5fb630afc6e7",
+                        "web": "1:665057026086:web:aa127a9561c26f8cafc6e7",
+                        "windows": "1:665057026086:web:117c85861905e5cbafc6e7"
+                    }
+                }
+            }
+        }
+    }
+}

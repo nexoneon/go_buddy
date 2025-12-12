@@ -1,0 +1,12 @@
+# Deploy Web App
+
+- [/] Explore project configuration <!-- id: 0 -->
+    - [x] Check for [firebase.json](file:///d:/nexonn/go_buddy_app/go_buddy/firebase.json) <!-- id: 1 -->
+    - [x] Check for [.firebaserc](file:///d:/nexonn/go_buddy_app/go_buddy/.firebaserc) (Likely missing) <!-- id: 1b -->
+    - [x] Verify `flutter` and `firebase` CLI availability <!-- id: 2 -->
+- [x] Build Flutter Web App <!-- id: 3 -->
+    - [x] Configure [firebase.json](file:///d:/nexonn/go_buddy_app/go_buddy/firebase.json) and [.firebaserc](file:///d:/nexonn/go_buddy_app/go_buddy/.firebaserc) <!-- id: 3b -->
+    - [x] Run `flutter build web --release` <!-- id: 4 -->
+- [/] Deploy to Hosting <!-- id: 5 -->
+    - [x] Initialize Firebase Hosting if needed (`firebase init hosting`) <!-- id: 6 -->
+    - [x] Run `firebase deploy --only hosting` <!-- id: 7 -->

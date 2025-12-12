@@ -928,23 +928,23 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 250,
             pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [const Color(0xFF0D7377), const Color(0xFF14919B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.build_outlined,
-                    size: 80,
-                    color: Colors.white54,
-                  ),
+            elevation: 0,
+            backgroundColor: const Color(0xFF0D7377),
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: Text(
+              service.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0D7377), Color(0xFF14919B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
             ),

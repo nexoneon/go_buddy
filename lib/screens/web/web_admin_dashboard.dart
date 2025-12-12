@@ -156,7 +156,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Go Buddy',
+                                      '7 Pay Services',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 20,

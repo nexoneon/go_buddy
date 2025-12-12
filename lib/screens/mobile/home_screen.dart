@@ -200,7 +200,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
                     const SizedBox(height: 32),
                     // App Name
                     const Text(
-                      'Go Buddy',
+                      '7 Pay Services',
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,

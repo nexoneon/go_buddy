@@ -200,7 +200,7 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
 
                     // App Name
                     const Text(
-                      'Go Buddy Admin',
+                      '7 Pay Services Admin',
                       style: TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.w800,

@@ -84,7 +84,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
                 ),
                 const SizedBox(width: 12),
                 const Text(
-                  'Go Buddy',
+                  '7 Pay Services',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,

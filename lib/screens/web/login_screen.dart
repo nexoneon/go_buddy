@@ -167,7 +167,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                   const SizedBox(height: 40),
                   // Welcome text
                   const Text(
-                    'Welcome to\nGo Buddy',
+                    'Welcome to\n7 Pay Services',
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w700,

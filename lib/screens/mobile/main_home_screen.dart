@@ -108,7 +108,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       case 4:
         return 'Settings';
       default:
-        return 'Go Buddy';
+        return '7 Pay Services';
     }
   }
 

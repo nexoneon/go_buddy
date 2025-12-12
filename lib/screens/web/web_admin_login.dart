@@ -254,7 +254,7 @@ class _WebAdminLoginScreenState extends State<WebAdminLoginScreen> {
                     const SizedBox(height: 32),
                     // Title
                     Text(
-                      _showOtpField ? 'Verify OTP' : 'Admin Login',
+                      _showOtpField ? 'Verify OTP' : '7 Pay Services Admin',
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,

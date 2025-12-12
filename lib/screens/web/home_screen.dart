@@ -10,7 +10,7 @@ class WebHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Go Buddy - Web'),
+        title: const Text('7 Pay Services - Web'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: const Center(child: Text('Web Home Screen')),

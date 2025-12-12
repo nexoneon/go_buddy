@@ -17,7 +17,7 @@ class SplashScreen extends StatelessWidget {
             Icon(Icons.rocket_launch, size: 80, color: Colors.white),
             SizedBox(height: 24),
             Text(
-              'Go Buddy',
+              '7 Pay Services',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

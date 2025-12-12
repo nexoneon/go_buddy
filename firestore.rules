@@ -92,6 +92,13 @@ service cloud.firestore {
                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
     }
 
+    // Support Tickets collection rules - allow users to create tickets
+    match /support_tickets/{ticketId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true);
+      allow update: if isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+
     // Gallery Images collection rules - readable by all authenticated users
     match /gallery_images/{imageId} {
       allow read: if isAuthenticated();

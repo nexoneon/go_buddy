@@ -17,6 +17,7 @@ import 'my_orders_screen.dart';
 import 'profile_screen.dart';
 import 'help_screen.dart';
 import 'address_list_screen.dart';
+import 'raise_request_screen.dart';
 
 /// Main Home Screen
 ///
@@ -420,6 +421,35 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const AddressListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                // Support Option
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D7377).withAlpha(26),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.support_agent,
+                      color: Color(0xFF0D7377),
+                    ),
+                  ),
+                  title: const Text(
+                    'Support',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: const Text('Raise a request'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RaiseRequestScreen(),
                       ),
                     );
                   },
@@ -907,28 +937,28 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           elevation: 0,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.favorite_border),
-              activeIcon: Icon(Icons.favorite),
+              icon: Icon(Icons.favorite, color: Colors.red),
+              activeIcon: Icon(Icons.favorite, color: Colors.red),
               label: 'Favourite',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag_outlined),
-              activeIcon: Icon(Icons.shopping_bag),
+              icon: Icon(Icons.shopping_bag_outlined, color: Colors.orange),
+              activeIcon: Icon(Icons.shopping_bag, color: Colors.orange),
               label: 'My Orders',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
+              icon: Icon(Icons.home_outlined, color: Color(0xFF0D7377)),
+              activeIcon: Icon(Icons.home, color: Color(0xFF0D7377)),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.help_outline),
-              activeIcon: Icon(Icons.help),
+              icon: Icon(Icons.help_outline, color: Colors.blue),
+              activeIcon: Icon(Icons.help, color: Colors.blue),
               label: 'Help',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
+              icon: Icon(Icons.settings_outlined, color: Color(0xFF1a237e)),
+              activeIcon: Icon(Icons.settings, color: Color(0xFF1a237e)),
               label: 'Settings',
             ),
           ],

@@ -237,18 +237,20 @@ class _WebAdminLoginScreenState extends State<WebAdminLoginScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            AppTheme.primaryColor,
-                            AppTheme.primaryLight,
-                          ],
-                        ),
+                        color: Colors.white, // White background for the logo
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Icon(
-                        Icons.admin_panel_settings,
-                        size: 50,
-                        color: Colors.white,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Padding(
+                          padding: const EdgeInsets.all(
+                            8.0,
+                          ), // Padding for the logo
+                          child: Image.asset(
+                            'assets/app_icon.jpg',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),

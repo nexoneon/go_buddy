@@ -146,9 +146,12 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
-                                  child: Image.asset(
-                                    'assets/app_icon.jpg',
-                                    fit: BoxFit.cover,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Image.asset(
+                                      'assets/app_icon.jpg',
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -2435,6 +2438,15 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
               order['status'] ?? 'pending',
             );
 
+            // Format Created At
+            String dateStr = 'Unknown';
+            if (order['created_at'] != null) {
+              final timestamp = order['created_at'] as Timestamp;
+              final date = timestamp.toDate();
+              dateStr =
+                  '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+            }
+
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               elevation: 2,
@@ -2453,7 +2465,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withAlpha(26),
+                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -2499,54 +2511,57 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(currentStatus).withAlpha(26),
+                            color: _getStatusColor(
+                              currentStatus,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: _getStatusColor(currentStatus),
                             ),
                           ),
-                          child: DropdownButton<OrderStatus>(
-                            value: currentStatus,
-                            underline: const SizedBox(),
-                            isDense: true,
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: _getStatusColor(currentStatus),
-                              size: 20,
-                            ),
-                            items: OrderStatus.values.map((status) {
-                              return DropdownMenuItem(
-                                value: status,
-                                child: Text(
-                                  status.displayName,
-                                  style: TextStyle(
-                                    color: _getStatusColor(status),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (newStatus) async {
-                              if (newStatus != null &&
-                                  newStatus != currentStatus) {
-                                await FirebaseFirestore.instance
-                                    .collection('orders')
-                                    .doc(orderDoc.id)
-                                    .update({'status': newStatus.value});
-
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Status updated to ${newStatus.displayName}',
-                                      ),
-                                      backgroundColor: Colors.green,
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<OrderStatus>(
+                              value: currentStatus,
+                              isDense: true,
+                              icon: Icon(
+                                Icons.arrow_drop_down,
+                                color: _getStatusColor(currentStatus),
+                                size: 20,
+                              ),
+                              items: OrderStatus.values.map((status) {
+                                return DropdownMenuItem(
+                                  value: status,
+                                  child: Text(
+                                    status.displayName,
+                                    style: TextStyle(
+                                      color: _getStatusColor(status),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
                                     ),
-                                  );
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (newStatus) async {
+                                if (newStatus != null &&
+                                    newStatus != currentStatus) {
+                                  await FirebaseFirestore.instance
+                                      .collection('orders')
+                                      .doc(orderDoc.id)
+                                      .update({'status': newStatus.value});
+
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Status updated to ${newStatus.displayName}',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
                                 }
-                              }
-                            },
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -2569,11 +2584,17 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                           Colors.green,
                         ),
                         const SizedBox(width: 12),
+                        _buildOrderInfoChip(
+                          Icons.calendar_today,
+                          order['booking_time'] ?? 'No time',
+                          Colors.orange,
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildOrderInfoChip(
-                            Icons.calendar_today,
-                            order['booking_time'] ?? 'No time',
-                            Colors.orange,
+                            Icons.access_time,
+                            'Ordered: $dateStr',
+                            Colors.grey,
                           ),
                         ),
                       ],

@@ -177,27 +177,123 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Logo Container
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(51),
-                            blurRadius: 30,
-                            offset: const Offset(0, 10),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Orbiting Service Icons
+                        ...List.generate(6, (index) {
+                          // Calculate position in a circle
+                          final radius = 140.0;
+                          return TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: Duration(
+                              milliseconds: 800 + (index * 200),
+                            ),
+                            curve: Curves.elasticOut,
+                            builder: (context, value, child) {
+                              // Calculate final position
+                              final x =
+                                  radius *
+                                  0.8 *
+                                  value *
+                                  (index == 0
+                                      ? 0
+                                      : (index == 1
+                                            ? 0.866
+                                            : (index == 2
+                                                  ? 0.866
+                                                  : (index == 3
+                                                        ? 0
+                                                        : (index == 4
+                                                              ? -0.866
+                                                              : -0.866)))));
+                              final y =
+                                  radius *
+                                  0.8 *
+                                  value *
+                                  (index == 0
+                                      ? -1
+                                      : (index == 1
+                                            ? -0.5
+                                            : (index == 2
+                                                  ? 0.5
+                                                  : (index == 3
+                                                        ? 1
+                                                        : (index == 4
+                                                              ? 0.5
+                                                              : -0.5)))));
+
+                              return Transform.translate(
+                                offset: Offset(x, y),
+                                child: Opacity(
+                                  opacity: value.clamp(0.0, 1.0),
+                                  child: Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      [
+                                        Icons.cleaning_services,
+                                        Icons.plumbing,
+                                        Icons.tv,
+                                        Icons.local_shipping,
+                                        Icons.format_paint,
+                                        Icons.electrical_services,
+                                      ][index],
+                                      color: AppTheme.primaryColor,
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }),
+
+                        // Central Logo Container
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(51),
+                                blurRadius: 30,
+                                offset: const Offset(0, 15),
+                              ),
+                              BoxShadow(
+                                color: AppTheme.primaryColor.withAlpha(30),
+                                blurRadius: 60,
+                                spreadRadius: -10,
+                                offset: const Offset(0, 0),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.rocket_launch_rounded,
-                        size: 60,
-                        color: AppTheme.primaryColor,
-                      ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: Image.asset(
+                              'assets/app_icon.jpg',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 130),
                     // App Name
                     const Text(
                       '7 Pay Services',

@@ -78,71 +78,78 @@ class _ImagesTabState extends State<ImagesTab> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: DataTable(
-                    columnSpacing: 24,
-                    horizontalMargin: 24,
-                    headingRowHeight: 56,
-                    dataRowMinHeight: 80,
-                    dataRowMaxHeight: 80,
-                    columns: const [
-                      DataColumn(label: Text('Image')),
-                      DataColumn(label: Text('Name')),
-                      DataColumn(label: Text('Uploaded At')),
-                      DataColumn(label: Text('Actions')),
-                    ],
-                    rows: images.map((image) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Container(
-                              width: 60,
-                              height: 60,
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  image.imageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.broken_image),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columnSpacing: 24,
+                      horizontalMargin: 24,
+                      headingRowHeight: 56,
+                      dataRowMinHeight: 80,
+                      dataRowMaxHeight: 80,
+                      columns: const [
+                        DataColumn(label: Text('Image')),
+                        DataColumn(label: Text('Name')),
+                        DataColumn(label: Text('Uploaded At')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: images.map((image) {
+                        return DataRow(
+                          cells: [
+                            DataCell(
+                              Container(
+                                width: 60,
+                                height: 60,
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[300]!),
                                 ),
-                              ),
-                            ),
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => Dialog(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Image.network(image.imageUrl),
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Close'),
-                                      ),
-                                    ],
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    image.imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(Icons.broken_image),
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                          DataCell(Text(image.name)),
-                          DataCell(
-                            Text(image.uploadedAt.toString().split('.')[0]),
-                          ),
-                          DataCell(
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _confirmDeleteImage(image),
+                              ),
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => Dialog(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Image.network(image.imageUrl),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('Close'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
+                            DataCell(Text(image.name)),
+                            DataCell(
+                              Text(image.uploadedAt.toString().split('.')[0]),
+                            ),
+                            DataCell(
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _confirmDeleteImage(image),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               );

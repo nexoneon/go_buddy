@@ -266,32 +266,29 @@ class _OrdersTabState extends State<OrdersTab> {
                     const Divider(height: 1),
                     const SizedBox(height: 12),
                     // Customer info row
-                    Row(
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
                       children: [
                         _buildOrderInfoChip(
                           Icons.person,
                           order['user_name'] ?? 'Unknown',
                           Colors.blue,
                         ),
-                        const SizedBox(width: 12),
                         _buildOrderInfoChip(
                           Icons.phone,
                           order['user_phone'] ?? 'No phone',
                           Colors.green,
                         ),
-                        const SizedBox(width: 12),
                         _buildOrderInfoChip(
                           Icons.calendar_today,
                           order['booking_time'] ?? 'No time',
                           Colors.orange,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildOrderInfoChip(
-                            Icons.access_time,
-                            'Ordered: $dateStr',
-                            Colors.grey,
-                          ),
+                        _buildOrderInfoChip(
+                          Icons.access_time,
+                          'Ordered: $dateStr',
+                          Colors.grey,
                         ),
                       ],
                     ),

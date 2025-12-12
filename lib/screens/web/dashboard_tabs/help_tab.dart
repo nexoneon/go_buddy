@@ -52,7 +52,6 @@ class _HelpTabState extends State<HelpTab> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
           color: Colors.white,
           child: Row(
             children: [
@@ -65,11 +64,14 @@ class _HelpTabState extends State<HelpTab> {
                 child: Icon(Icons.info_outline, color: AppTheme.primaryColor),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'About Us Management',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              const Expanded(
+                child: Text(
+                  'About Us Management',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () => _showAddEditAboutUsDialog(),
                 icon: const Icon(Icons.add, size: 20),
@@ -218,39 +220,41 @@ class _HelpTabState extends State<HelpTab> {
           ),
           content: SizedBox(
             width: 500,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: headerController,
-                  decoration: InputDecoration(
-                    labelText: 'Header',
-                    prefixIcon: const Icon(Icons.title),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: headerController,
+                    decoration: InputDecoration(
+                      labelText: 'Header',
+                      prefixIcon: const Icon(Icons.title),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descController,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(bottom: 80),
-                      child: Icon(Icons.description),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descController,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 80),
+                        child: Icon(Icons.description),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -412,11 +416,14 @@ class _HelpTabState extends State<HelpTab> {
                 child: Icon(Icons.help_outline, color: Colors.blue[700]),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'FAQ Management',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              const Expanded(
+                child: Text(
+                  'FAQ Management',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () => _showAddEditFAQDialog(),
                 icon: const Icon(Icons.add, size: 20),
@@ -568,40 +575,42 @@ class _HelpTabState extends State<HelpTab> {
           ),
           content: SizedBox(
             width: 500,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: questionController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Question',
-                    prefixIcon: const Icon(Icons.help_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: questionController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      labelText: 'Question',
+                      prefixIcon: const Icon(Icons.help_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: answerController,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    labelText: 'Answer',
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(bottom: 80),
-                      child: Icon(Icons.question_answer),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: answerController,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      labelText: 'Answer',
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 80),
+                        child: Icon(Icons.question_answer),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -763,11 +772,14 @@ class _HelpTabState extends State<HelpTab> {
                 child: Icon(Icons.support_agent, color: Colors.purple[700]),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Support Information',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              const Expanded(
+                child: Text(
+                  'Support Information',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () => _showAddEditSupportDialog(),
                 icon: const Icon(Icons.add, size: 20),
@@ -963,63 +975,65 @@ class _HelpTabState extends State<HelpTab> {
           ),
           content: SizedBox(
             width: 500,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: selectedType,
-                  decoration: InputDecoration(
-                    labelText: 'Type',
-                    prefixIcon: const Icon(Icons.category),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    decoration: InputDecoration(
+                      labelText: 'Type',
+                      prefixIcon: const Icon(Icons.category),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
+                    items: types
+                        .map(
+                          (t) => DropdownMenuItem(
+                            value: t,
+                            child: Text(t.toUpperCase()),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setDialogState(() => selectedType = v!),
                   ),
-                  items: types
-                      .map(
-                        (t) => DropdownMenuItem(
-                          value: t,
-                          child: Text(t.toUpperCase()),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) => setDialogState(() => selectedType = v!),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'e.g., Phone, Email',
-                    prefixIcon: const Icon(Icons.title),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'e.g., Phone, Email',
+                      prefixIcon: const Icon(Icons.title),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: valueController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Value',
-                    hintText: 'e.g., +91 98765 43210',
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(bottom: 40),
-                      child: Icon(Icons.info_outline),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: valueController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Value',
+                      hintText: 'e.g., +91 98765 43210',
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 40),
+                        child: Icon(Icons.info_outline),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [

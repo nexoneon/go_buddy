@@ -50,44 +50,71 @@ class DashboardTab extends StatelessWidget {
                         }
                       }
 
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatCard(
-                              'Services',
-                              '$servicesCount',
-                              Icons.inventory_2,
-                              Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatCard(
-                              'Orders',
-                              '$ordersCount',
-                              Icons.shopping_cart,
-                              Colors.green,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatCard(
-                              'Users',
-                              '$usersCount',
-                              Icons.people,
-                              Colors.orange,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatCard(
-                              'Revenue',
-                              '₹${totalRevenue.toStringAsFixed(0)}',
-                              Icons.currency_rupee,
-                              Colors.purple,
-                            ),
-                          ),
-                        ],
+                      final cards = [
+                        _buildStatCard(
+                          'Services',
+                          '$servicesCount',
+                          Icons.inventory_2,
+                          Colors.blue,
+                        ),
+                        _buildStatCard(
+                          'Orders',
+                          '$ordersCount',
+                          Icons.shopping_cart,
+                          Colors.green,
+                        ),
+                        _buildStatCard(
+                          'Users',
+                          '$usersCount',
+                          Icons.people,
+                          Colors.orange,
+                        ),
+                        _buildStatCard(
+                          'Revenue',
+                          '₹${totalRevenue.toStringAsFixed(0)}',
+                          Icons.currency_rupee,
+                          Colors.purple,
+                        ),
+                      ];
+
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth <= 700) {
+                            return Column(
+                              children: cards
+                                  .map(
+                                    (card) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 16,
+                                      ),
+                                      child: card,
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                          }
+
+                          // Force 4 columns for any width > 700px
+                          int crossAxisCount = 4;
+
+                          // Calculate aspect ratio to maintain a fixed height
+                          // Total width - spacing / number of columns
+                          double cardWidth =
+                              (constraints.maxWidth -
+                                  ((crossAxisCount - 1) * 16)) /
+                              crossAxisCount;
+                          double aspectRatio = cardWidth / 170;
+
+                          return GridView.count(
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            childAspectRatio: aspectRatio,
+                            children: cards,
+                          );
+                        },
                       );
                     },
                   );

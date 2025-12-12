@@ -149,45 +149,58 @@ class _UsersTabState extends State<UsersTab> {
                           const Divider(height: 16),
                           // Bottom row: Status and joined date
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // Status
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: user.isActive
-                                      ? Colors.green[50]
-                                      : Colors.red[50],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  user.isActive ? 'Active' : 'Inactive',
-                                  style: TextStyle(
-                                    color: user.isActive
-                                        ? Colors.green[700]
-                                        : Colors.red[700],
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                              Expanded(
+                                child: Wrap(
+                                  spacing: 12,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    // Status
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: user.isActive
+                                            ? Colors.green[50]
+                                            : Colors.red[50],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        user.isActive ? 'Active' : 'Inactive',
+                                        style: TextStyle(
+                                          color: user.isActive
+                                              ? Colors.green[700]
+                                              : Colors.red[700],
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          size: 12,
+                                          color: Colors.grey[500],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${user.dateJoined.day}/${user.dateJoined.month}/${user.dateJoined.year}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Icon(
-                                Icons.calendar_today,
-                                size: 12,
-                                color: Colors.grey[500],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${user.dateJoined.day}/${user.dateJoined.month}/${user.dateJoined.year}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const Spacer(),
                               IconButton(
                                 icon: const Icon(Icons.more_vert, size: 18),
                                 onPressed: () {

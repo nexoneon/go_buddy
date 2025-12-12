@@ -43,6 +43,11 @@ service cloud.firestore {
       match /favourites/{favouriteId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Addresses subcollection - users can only access their own addresses
+      match /addresses/{addressId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Services collection rules

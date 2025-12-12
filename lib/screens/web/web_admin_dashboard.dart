@@ -21,6 +21,8 @@ import '../../services/category_service.dart';
 import 'web_admin_login.dart';
 import '../../models/gallery_image_model.dart';
 import '../../services/gallery_image_service.dart';
+import '../../services/support_ticket_service.dart';
+import '../../models/support_ticket_model.dart';
 
 /// Web Admin Dashboard
 ///
@@ -40,6 +42,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   final FAQService _faqService = FAQService();
   final SupportService _supportService = SupportService();
   final GalleryImageService _galleryImageService = GalleryImageService();
+  final SupportTicketService _supportTicketService = SupportTicketService();
   int _selectedIndex = 0;
   bool _isSidebarOpen = true; // Sidebar toggle state
 
@@ -50,6 +53,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     'Orders',
     'Users',
     'Images',
+    'User Support',
     'Help',
     //'Settings',
   ];
@@ -137,18 +141,16 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      AppTheme.primaryColor,
-                                      AppTheme.primaryLight,
-                                    ],
-                                  ),
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                // child: const Icon(
-                                //   Icons.admin_panel_settings,
-                                //   color: Colors.white,
-                                // ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.asset(
+                                    'assets/app_icon.jpg',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 12),
                               const Expanded(
@@ -389,8 +391,10 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       case 5:
         return Icons.image;
       case 6:
+        return Icons.support_agent; // User Support
+      case 7:
         return Icons.help_outline; // Help
-      // case 7:
+      // case 8:
       //   return Icons.settings;
       default:
         return Icons.dashboard;
@@ -412,8 +416,10 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       case 5:
         return _buildImages();
       case 6:
+        return _buildUserSupport();
+      case 7:
         return _buildHelp();
-      // case 7:
+      // case 8:
       //   return _buildSettings();
       default:
         return _buildDashboard();
@@ -464,33 +470,42 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                         }
                       }
 
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
+                      return Row(
                         children: [
-                          _buildStatCard(
-                            'Services',
-                            '$servicesCount',
-                            Icons.inventory_2,
-                            Colors.blue,
+                          Expanded(
+                            child: _buildStatCard(
+                              'Services',
+                              '$servicesCount',
+                              Icons.inventory_2,
+                              Colors.blue,
+                            ),
                           ),
-                          _buildStatCard(
-                            'Orders',
-                            '$ordersCount',
-                            Icons.shopping_cart,
-                            Colors.green,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildStatCard(
+                              'Orders',
+                              '$ordersCount',
+                              Icons.shopping_cart,
+                              Colors.green,
+                            ),
                           ),
-                          _buildStatCard(
-                            'Users',
-                            '$usersCount',
-                            Icons.people,
-                            Colors.orange,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildStatCard(
+                              'Users',
+                              '$usersCount',
+                              Icons.people,
+                              Colors.orange,
+                            ),
                           ),
-                          _buildStatCard(
-                            'Revenue',
-                            '₹${totalRevenue.toStringAsFixed(0)}',
-                            Icons.currency_rupee,
-                            Colors.purple,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildStatCard(
+                              'Revenue',
+                              '₹${totalRevenue.toStringAsFixed(0)}',
+                              Icons.currency_rupee,
+                              Colors.purple,
+                            ),
                           ),
                         ],
                       );
@@ -632,7 +647,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     Color color,
   ) {
     return Container(
-      width: 160,
+      // width: 160, // Removed fixed width for flexibility
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -4248,7 +4263,197 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
   // Widget _buildSettings() {
   //   return _buildComingSoon('Settings');
-  // }
+  //   // --- User Support Section ---
+
+  Widget _buildUserSupport() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          width: double.infinity,
+          child: const Text(
+            'User Support Requests',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<List<SupportTicketModel>>(
+            stream: _supportTicketService.getAllTickets(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final tickets = snapshot.data ?? [];
+
+              if (tickets.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No support requests found.',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: tickets.length,
+                itemBuilder: (context, index) {
+                  final ticket = tickets[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  ticket.subject,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getTicketStatusColor(
+                                    ticket.status,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: ticket.status,
+                                    isDense: true,
+                                    style: TextStyle(
+                                      color: _getTicketStatusColor(
+                                        ticket.status,
+                                      ),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                    items:
+                                        [
+                                          'open',
+                                          'in_progress',
+                                          'resolved',
+                                          'closed',
+                                        ].map((status) {
+                                          return DropdownMenuItem(
+                                            value: status,
+                                            child: Text(
+                                              status.toUpperCase().replaceAll(
+                                                '_',
+                                                ' ',
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                    onChanged: (newStatus) {
+                                      if (newStatus != null) {
+                                        _supportTicketService
+                                            .updateTicketStatus(
+                                              ticket.id,
+                                              newStatus,
+                                            );
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                ticket.userPhone.isEmpty
+                                    ? 'No Phone'
+                                    : ticket.userPhone,
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Icon(
+                                Icons.calendar_today,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                ticket.createdAt.toString().split('.')[0],
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Text(
+                              ticket.message,
+                              style: const TextStyle(height: 1.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getTicketStatusColor(String status) {
+    switch (status) {
+      case 'open':
+        return Colors.blue;
+      case 'in_progress':
+        return Colors.orange;
+      case 'resolved':
+        return Colors.green;
+      case 'closed':
+        return Colors.grey;
+      default:
+        return Colors.blue;
+    }
+  }
+}
 
   // Widget _buildComingSoon(String title) {
   //   return Center(
@@ -4265,4 +4470,4 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   //     ),
   //   );
   // }
-}
+

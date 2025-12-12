@@ -28,4 +28,29 @@ class SupportTicketService {
               .toList();
         });
   }
+
+  // Get all tickets (for admin)
+  Stream<List<SupportTicketModel>> getAllTickets() {
+    return _ticketsCollection
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => SupportTicketModel.fromFirestore(doc))
+              .toList();
+        });
+  }
+
+  // Update ticket status
+  Future<void> updateTicketStatus(String ticketId, String newStatus) async {
+    try {
+      await _ticketsCollection.doc(ticketId).update({
+        'status': newStatus,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Error updating ticket status: $e');
+      rethrow;
+    }
+  }
 }

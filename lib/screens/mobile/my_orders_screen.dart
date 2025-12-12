@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/order_model.dart';
 import '../../services/order_service.dart';
 import '../../services/user_service.dart';
+import '../../services/favourite_service.dart'; // Import FavouriteService
 import '../../config/config.dart';
 
 class MyOrdersScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     with SingleTickerProviderStateMixin {
   final OrderService _orderService = OrderService();
   final UserService _userService = UserService();
+  final FavouriteService _favouriteService =
+      FavouriteService(); // Initialize FavouriteService
   late TabController _tabController;
 
   @override
@@ -96,8 +99,16 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                     return TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildOrdersList(ongoingOrders, isOngoing: true),
-                        _buildOrdersList(completedOrders, isOngoing: false),
+                        _buildOrdersList(
+                          ongoingOrders,
+                          isOngoing: true,
+                          userId: user.uid,
+                        ),
+                        _buildOrdersList(
+                          completedOrders,
+                          isOngoing: false,
+                          userId: user.uid,
+                        ),
                       ],
                     );
                   },
@@ -161,7 +172,11 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     );
   }
 
-  Widget _buildOrdersList(List<OrderModel> orders, {required bool isOngoing}) {
+  Widget _buildOrdersList(
+    List<OrderModel> orders, {
+    required bool isOngoing,
+    required String userId,
+  }) {
     if (orders.isEmpty) {
       return _buildEmptyState(isOngoing: isOngoing);
     }
@@ -170,7 +185,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
       padding: const EdgeInsets.all(16),
       itemCount: orders.length,
       itemBuilder: (context, index) {
-        return _buildOrderCard(orders[index]);
+        return _buildOrderCard(orders[index], userId);
       },
     );
   }
@@ -213,7 +228,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     );
   }
 
-  Widget _buildOrderCard(OrderModel order) {
+  Widget _buildOrderCard(OrderModel order, String userId) {
     final statusInfo = _getStatusInfo(order.status);
 
     return Container(
@@ -292,14 +307,41 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            order.serviceName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  order.serviceName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              // Favourite Icon
+                              StreamBuilder<bool>(
+                                stream: _favouriteService.isFavouriteStream(
+                                  userId,
+                                  order.serviceId,
+                                ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasData &&
+                                      snapshot.data == true) {
+                                    return const Padding(
+                                      padding: EdgeInsets.only(left: 6.0),
+                                      child: Icon(
+                                        Icons.favorite,
+                                        color: Colors.red,
+                                        size: 18,
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(

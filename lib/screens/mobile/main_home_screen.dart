@@ -16,6 +16,7 @@ import 'service_detail_screen.dart';
 import 'my_orders_screen.dart';
 import 'profile_screen.dart';
 import 'help_screen.dart';
+import 'address_list_screen.dart';
 
 /// Main Home Screen
 ///
@@ -390,6 +391,35 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const MobileProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                // Manage Addresses Option
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D7377).withAlpha(26),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.location_on_outlined,
+                      color: Color(0xFF0D7377),
+                    ),
+                  ),
+                  title: const Text(
+                    'Manage Addresses',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: const Text('Add or edit your addresses'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddressListScreen(),
                       ),
                     );
                   },

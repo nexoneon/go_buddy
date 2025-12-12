@@ -4,8 +4,11 @@ import '../../models/order_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/order_service.dart';
 import '../../services/user_service.dart';
+import '../../services/address_service.dart';
+import '../../models/address_model.dart';
 import '../../config/config.dart';
 import 'profile_screen.dart';
+import 'address_list_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final ServiceModel service;
@@ -20,6 +23,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final AuthService _authService = AuthService();
   final OrderService _orderService = OrderService();
   final UserService _userService = UserService();
+  final AddressService _addressService = AddressService();
 
   void _showBookingDialog() async {
     // First check if user profile is complete
@@ -126,10 +130,18 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     bool isFormValid = false;
     bool termsAccepted = false;
 
-    // Pre-fill user's address (we already have user from profile check above)
-    if (user.address != null && user.address!.isNotEmpty) {
-      addressController.text = user.address!;
-    }
+    // Pre-fill address logic
+    // Fetch default address
+    _addressService.getDefaultOrLatestAddress(uid).then((addr) {
+      if (addr != null && mounted) {
+        addressController.text = addr.fullAddress;
+      } else if (user.address != null && user.address!.isNotEmpty) {
+        // Fallback to profile address if no saved address found
+        addressController.text = user.address!;
+      }
+      // Note: We can't easily setState here because we are outside the bottom sheet's StatefulBuilder yet.
+      // But since we pass controller to the builder, it should show up.
+    });
 
     // Function to check if all fields are valid
     void checkFormValidity(StateSetter setDialogState) {
@@ -288,10 +300,29 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             // Address field
                             TextFormField(
                               controller: addressController,
+                              readOnly: true, // Make it read-only
+                              onTap: () async {
+                                final result =
+                                    await Navigator.push<AddressModel>(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddressListScreen(
+                                              isSelectionMode: true,
+                                            ),
+                                      ),
+                                    );
+
+                                if (result != null) {
+                                  addressController.text = result.fullAddress;
+                                  checkFormValidity(setDialogState);
+                                }
+                              },
                               decoration: InputDecoration(
                                 labelText: 'Service Address',
-                                hintText: 'Enter complete address',
+                                hintText: 'Select address',
                                 prefixIcon: const Icon(Icons.home_outlined),
+                                suffixIcon: const Icon(Icons.arrow_drop_down),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -312,8 +343,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 fillColor: Colors.grey[50],
                               ),
                               maxLines: 2,
-                              onChanged: (_) =>
-                                  checkFormValidity(setDialogState),
                               validator: (v) => v?.isEmpty == true
                                   ? 'Address is required'
                                   : null,

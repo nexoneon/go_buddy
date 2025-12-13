@@ -5,12 +5,17 @@ import 'firebase_options.dart';
 import 'config/config.dart';
 import 'screens/web/web_screens.dart';
 import 'screens/mobile/home_screen.dart';
+import 'services/connectivity_service.dart';
+import 'widgets/no_internet_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Connectivity Service
+  await ConnectivityService().initialize();
 
   runApp(const MyApp());
 }
@@ -34,10 +39,16 @@ class MyApp extends StatelessWidget {
   Widget _getHomeScreen() {
     if (kIsWeb) {
       // Web platform: Show Bootstrap screen which handles auth routing
-      return const WebBootstrapScreen();
+      return const ConnectivityWrapper(
+        showBanner: true,
+        child: WebBootstrapScreen(),
+      );
     } else {
       // Mobile platform: Show MobileHomeScreen (Splash) → then navigates to LoginScreen
-      return const MobileHomeScreen();
+      return const ConnectivityWrapper(
+        showBanner: true,
+        child: MobileHomeScreen(),
+      );
     }
   }
 }

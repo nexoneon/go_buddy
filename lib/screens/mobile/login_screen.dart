@@ -320,14 +320,16 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            gradient: MobileTheme.primaryGradient,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(24),
             boxShadow: MobileTheme.fabShadow,
           ),
-          child: const Icon(
-            Icons.rocket_launch_rounded,
-            size: 40,
-            color: Colors.white,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset('assets/app_icon.jpg', fit: BoxFit.contain),
+            ),
           ),
         ),
         const SizedBox(height: 24),

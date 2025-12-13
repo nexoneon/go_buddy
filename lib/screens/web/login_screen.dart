@@ -5,6 +5,8 @@ import '../../services/admin_service.dart';
 import '../../models/admin_model.dart';
 import 'web_admin_dashboard.dart';
 import 'web_admin_signup.dart';
+import 'web_privacy_policy.dart';
+import 'web_terms_of_service.dart';
 
 /// Web Admin Login Screen
 ///
@@ -231,15 +233,28 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                 children: [
                   // Logo
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.admin_panel_settings_rounded,
-                      size: 48,
                       color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Image.asset(
+                          'assets/app_icon.jpg',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -533,6 +548,50 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                 //     ),
                 //   ],
                 // ),
+
+                // Privacy Policy & Terms Links
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const WebPrivacyPolicyScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    Text(' | ', style: TextStyle(color: Colors.grey[400])),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const WebTermsOfServiceScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Terms of Service',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

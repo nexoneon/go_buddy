@@ -164,7 +164,7 @@ class WebTheme {
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFA855F7)],
+    colors: [Color(0xFF0D7377), Color(0xFF095557), Color(0xFF063D3F)],
   );
 
   // Input Decoration for Web

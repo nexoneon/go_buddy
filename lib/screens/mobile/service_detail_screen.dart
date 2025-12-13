@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../services/order_service.dart';
 import '../../services/user_service.dart';
 import '../../services/address_service.dart';
+import '../../services/connectivity_service.dart';
 import '../../models/address_model.dart';
 import '../../config/config.dart';
 import 'profile_screen.dart';
@@ -24,6 +25,55 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final OrderService _orderService = OrderService();
   final UserService _userService = UserService();
   final AddressService _addressService = AddressService();
+  final ConnectivityService _connectivityService = ConnectivityService();
+
+  bool _wasConnected = true;
+  bool _isOffline = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _wasConnected = _connectivityService.isConnected;
+    // Check if already offline when screen loads
+    _isOffline = !_connectivityService.isConnected;
+    _connectivityService.addListener(_onConnectivityChanged);
+  }
+
+  @override
+  void dispose() {
+    _connectivityService.removeListener(_onConnectivityChanged);
+    super.dispose();
+  }
+
+  void _onConnectivityChanged() {
+    if (mounted) {
+      final isConnected = _connectivityService.isConnected;
+
+      if (_wasConnected && !isConnected) {
+        setState(() => _isOffline = true);
+      }
+
+      if (!_wasConnected && isConnected) {
+        setState(() => _isOffline = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.wifi, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text('Back online!'),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      _wasConnected = isConnected;
+    }
+  }
 
   void _showBookingDialog() async {
     // First check if user profile is complete
@@ -925,218 +975,261 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     final service = widget.service;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            elevation: 0,
-            backgroundColor: const Color(0xFF0D7377),
-            iconTheme: const IconThemeData(color: Colors.white),
-            title: Text(
-              service.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            flexibleSpace: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0D7377), Color(0xFF14919B)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      body: Column(
+        children: [
+          // Persistent No Internet Banner
+          if (_isOffline)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: AppTheme.errorColor,
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'No Internet Connection',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          service.name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '₹${service.price.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ],
+          // Main Content
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  elevation: 0,
+                  backgroundColor: const Color(0xFF0D7377),
+                  iconTheme: const IconThemeData(color: Colors.white),
+                  title: Text(
+                    service.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: service.accept
-                              ? Colors.green.withAlpha(26)
-                              : Colors.red.withAlpha(26),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                  flexibleSpace: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF0D7377), Color(0xFF14919B)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              service.accept
-                                  ? Icons.check_circle
-                                  : Icons.cancel,
-                              color: service.accept ? Colors.green : Colors.red,
-                              size: 16,
+                            Expanded(
+                              child: Text(
+                                service.name,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 4),
                             Text(
-                              service.accept ? 'Available' : 'Unavailable',
+                              '₹${service.price.toStringAsFixed(0)}',
                               style: TextStyle(
-                                color: service.accept
-                                    ? Colors.green
-                                    : Colors.red,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      if (service.isFavourite) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withAlpha(26),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.star, color: Colors.amber, size: 16),
-                              SizedBox(width: 4),
-                              Text(
-                                'Featured',
-                                style: TextStyle(
-                                  color: Colors.amber,
-                                  fontWeight: FontWeight.w500,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: service.accept
+                                    ? Colors.green.withAlpha(26)
+                                    : Colors.red.withAlpha(26),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    service.accept
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    color: service.accept
+                                        ? Colors.green
+                                        : Colors.red,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    service.accept
+                                        ? 'Available'
+                                        : 'Unavailable',
+                                    style: TextStyle(
+                                      color: service.accept
+                                          ? Colors.green
+                                          : Colors.red,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (service.isFavourite) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
                                 ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withAlpha(26),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Featured',
+                                      style: TextStyle(
+                                        color: Colors.amber,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Customer Responsibility Section
+                        if (service.customerResponsibility != null &&
+                            service.customerResponsibility!.isNotEmpty)
+                          _buildInfoSection(
+                            icon: Icons.person_outline,
+                            title: 'Customer Responsibility',
+                            content: service.customerResponsibility!,
+                            color: Colors.blue,
+                          ),
+
+                        // Provider Responsibility Section
+                        if (service.providerResponsibility != null &&
+                            service.providerResponsibility!.isNotEmpty)
+                          _buildInfoSection(
+                            icon: Icons.engineering_outlined,
+                            title: 'Provider Responsibility',
+                            content: service.providerResponsibility!,
+                            color: Colors.orange,
+                          ),
+
+                        // Note Section
+                        if (service.note != null && service.note!.isNotEmpty)
+                          _buildInfoSection(
+                            icon: Icons.note_alt_outlined,
+                            title: 'Note',
+                            content: service.note!,
+                            color: Colors.purple,
+                          ),
+
+                        // GoBuddy Cares Section
+                        if (service.goBuddyCares != null &&
+                            service.goBuddyCares!.isNotEmpty)
+                          _buildInfoSection(
+                            icon: Icons.favorite_outline,
+                            title: 'GoBuddy Cares',
+                            content: service.goBuddyCares!,
+                            color: const Color(0xFF0D7377),
+                          ),
+
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+
+                        // Service Features
+                        const Text(
+                          'Service Features',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Feature tiles
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildFeatureTile(
+                                icon: Icons.verified,
+                                iconColor: Colors.green,
+                                title: 'Verified Professional',
+                                subtitle: 'Background checked and trained',
+                              ),
+                              Divider(height: 1, color: Colors.grey[200]),
+                              _buildFeatureTile(
+                                icon: Icons.schedule,
+                                iconColor: Colors.blue,
+                                title: 'Flexible Scheduling',
+                                subtitle: 'Book at your convenience',
+                              ),
+                              // Divider(height: 1, color: Colors.grey[200]),
+                              // _buildFeatureTile(
+                              //   icon: Icons.shield_outlined,
+                              //   iconColor: Colors.purple,
+                              //   title: 'Service Guarantee',
+                              //   subtitle: '100% satisfaction or money back',
+                              // ),
+                              Divider(height: 1, color: Colors.grey[200]),
+                              _buildFeatureTile(
+                                icon: Icons.support_agent,
+                                iconColor: Colors.orange,
+                                title: '24/7 Support',
+                                subtitle: 'Always here to help',
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Customer Responsibility Section
-                  if (service.customerResponsibility != null &&
-                      service.customerResponsibility!.isNotEmpty)
-                    _buildInfoSection(
-                      icon: Icons.person_outline,
-                      title: 'Customer Responsibility',
-                      content: service.customerResponsibility!,
-                      color: Colors.blue,
-                    ),
-
-                  // Provider Responsibility Section
-                  if (service.providerResponsibility != null &&
-                      service.providerResponsibility!.isNotEmpty)
-                    _buildInfoSection(
-                      icon: Icons.engineering_outlined,
-                      title: 'Provider Responsibility',
-                      content: service.providerResponsibility!,
-                      color: Colors.orange,
-                    ),
-
-                  // Note Section
-                  if (service.note != null && service.note!.isNotEmpty)
-                    _buildInfoSection(
-                      icon: Icons.note_alt_outlined,
-                      title: 'Note',
-                      content: service.note!,
-                      color: Colors.purple,
-                    ),
-
-                  // GoBuddy Cares Section
-                  if (service.goBuddyCares != null &&
-                      service.goBuddyCares!.isNotEmpty)
-                    _buildInfoSection(
-                      icon: Icons.favorite_outline,
-                      title: 'GoBuddy Cares',
-                      content: service.goBuddyCares!,
-                      color: const Color(0xFF0D7377),
-                    ),
-
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 8),
-
-                  // Service Features
-                  const Text(
-                    'Service Features',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Feature tiles
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey[200]!),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildFeatureTile(
-                          icon: Icons.verified,
-                          iconColor: Colors.green,
-                          title: 'Verified Professional',
-                          subtitle: 'Background checked and trained',
-                        ),
-                        Divider(height: 1, color: Colors.grey[200]),
-                        _buildFeatureTile(
-                          icon: Icons.schedule,
-                          iconColor: Colors.blue,
-                          title: 'Flexible Scheduling',
-                          subtitle: 'Book at your convenience',
-                        ),
-                        // Divider(height: 1, color: Colors.grey[200]),
-                        // _buildFeatureTile(
-                        //   icon: Icons.shield_outlined,
-                        //   iconColor: Colors.purple,
-                        //   title: 'Service Guarantee',
-                        //   subtitle: '100% satisfaction or money back',
-                        // ),
-                        Divider(height: 1, color: Colors.grey[200]),
-                        _buildFeatureTile(
-                          icon: Icons.support_agent,
-                          iconColor: Colors.orange,
-                          title: '24/7 Support',
-                          subtitle: 'Always here to help',
-                        ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

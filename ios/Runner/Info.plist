@@ -51,5 +51,10 @@
 	<string>This app requires access to the camera to take profile pictures.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app requires access to the microphone for video recording.</string>
+	<!-- Required for connectivity_plus on iOS -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartobservatory._tcp</string>
+	</array>
 </dict>
 </plist>

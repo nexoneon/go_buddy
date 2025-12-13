@@ -149,10 +149,13 @@ class ConnectivityWrapper extends StatefulWidget {
 
 class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
   final ConnectivityService _connectivityService = ConnectivityService();
+  bool _wasConnected = true; // Track if user was previously connected
+  bool _showDisconnectedBanner = false; // Only show after a connection drop
 
   @override
   void initState() {
     super.initState();
+    _wasConnected = _connectivityService.isConnected;
     _connectivityService.addListener(_onConnectivityChanged);
   }
 
@@ -164,14 +167,34 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
 
   void _onConnectivityChanged() {
     if (mounted) {
-      setState(() {});
+      final isConnected = _connectivityService.isConnected;
+
+      // Only show banner if we were connected and now we're not
+      if (_wasConnected && !isConnected) {
+        setState(() {
+          _showDisconnectedBanner = true;
+        });
+      }
+
+      // Hide banner when reconnected
+      if (!_wasConnected && isConnected) {
+        setState(() {
+          _showDisconnectedBanner = false;
+        });
+      }
+
+      _wasConnected = isConnected;
     }
   }
 
   void _handleRetry() async {
     await _connectivityService.checkConnectivity();
     if (mounted) {
-      setState(() {});
+      setState(() {
+        if (_connectivityService.isConnected) {
+          _showDisconnectedBanner = false;
+        }
+      });
     }
   }
 
@@ -179,14 +202,15 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
   Widget build(BuildContext context) {
     final isConnected = _connectivityService.isConnected;
 
-    if (widget.showOverlay && !isConnected) {
+    if (widget.showOverlay && _showDisconnectedBanner && !isConnected) {
       return NoInternetOverlay(onRetry: _handleRetry);
     }
 
     return Column(
       children: [
-        // No Internet Banner
-        if (widget.showBanner && !isConnected) const NoInternetBanner(),
+        // No Internet Banner - only show after connection drop
+        if (widget.showBanner && _showDisconnectedBanner && !isConnected)
+          const NoInternetBanner(),
         // Main Content
         Expanded(child: widget.child),
       ],

@@ -5,6 +5,7 @@ import '../../services/user_service.dart';
 import '../../services/category_service.dart';
 import '../../services/service_service.dart';
 import '../../services/favourite_service.dart';
+import '../../services/connectivity_service.dart';
 import '../../models/category_model.dart';
 import '../../models/service_model.dart';
 import '../../models/gallery_image_model.dart';
@@ -37,14 +38,72 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   final FavouriteService _favouriteService = FavouriteService();
   final GalleryImageService _galleryImageService =
       GalleryImageService(); // Initialize Service
+  final ConnectivityService _connectivityService = ConnectivityService();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int _selectedIndex = 2; // Home is selected by default
+  bool _wasConnected = true;
+  bool _isOffline = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _wasConnected = _connectivityService.isConnected;
+    // Check if already offline when screen loads
+    _isOffline = !_connectivityService.isConnected;
+    _connectivityService.addListener(_onConnectivityChanged);
+  }
+
+  @override
+  void dispose() {
+    _connectivityService.removeListener(_onConnectivityChanged);
+    super.dispose();
+  }
+
+  void _onConnectivityChanged() {
+    if (mounted) {
+      final isConnected = _connectivityService.isConnected;
+
+      // Show snackbar when connection drops
+      if (_wasConnected && !isConnected) {
+        setState(() => _isOffline = true);
+        _showConnectivitySnackbar(false);
+      }
+
+      // Show snackbar when reconnected
+      if (!_wasConnected && isConnected) {
+        setState(() => _isOffline = false);
+        _showConnectivitySnackbar(true);
+      }
+
+      _wasConnected = isConnected;
+    }
+  }
+
+  void _showConnectivitySnackbar(bool isConnected) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isConnected ? Icons.wifi : Icons.wifi_off_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Text(isConnected ? 'Back online!' : 'No internet connection'),
+          ],
+        ),
+        backgroundColor: isConnected
+            ? AppTheme.successColor
+            : AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+        duration: Duration(seconds: isConnected ? 2 : 4),
+      ),
+    );
   }
 
   Future<void> _loadUserData() async {
@@ -119,7 +178,34 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: _buildAppBar(user),
-      body: _buildContentForIndex(),
+      body: Column(
+        children: [
+          // Persistent No Internet Banner
+          if (_isOffline)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: AppTheme.errorColor,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'No Internet Connection',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // Main Content
+          Expanded(child: _buildContentForIndex()),
+        ],
+      ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../config/config.dart';
 import '../../services/auth_service.dart';
-import '../../services/user_service.dart';
-import 'web_admin_login.dart';
+import '../../services/admin_service.dart';
+import 'login_screen.dart';
 import 'web_admin_dashboard.dart';
 
 /// Web Bootstrap Screen
@@ -19,7 +19,7 @@ class WebBootstrapScreen extends StatefulWidget {
 class _WebBootstrapScreenState extends State<WebBootstrapScreen>
     with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
-  final UserService _userService = UserService();
+  final AdminService _adminService = AdminService();
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -82,27 +82,35 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
     }
 
     final uid = currentUser.uid;
-    final userExists = await _userService.userExists(uid);
+    final adminExists = await _adminService.adminExists(uid);
 
-    if (!userExists) {
-      // User not in database - logout and redirect
+    if (!adminExists) {
+      // Admin not in database - logout and redirect
       await _authService.signOut();
       _navigateToLogin();
       return;
     }
 
-    // Get user data
-    final user = await _userService.getUser(uid);
+    // Get admin data
+    final admin = await _adminService.getAdmin(uid);
 
-    if (user == null) {
-      // Error loading user - logout and redirect
+    if (admin == null) {
+      // Error loading admin - logout and redirect
+      await _authService.signOut();
+      _navigateToLogin();
+      return;
+    }
+
+    // Check if admin is active
+    if (!admin.isActive) {
+      // Admin not active - logout and redirect
       await _authService.signOut();
       _navigateToLogin();
       return;
     }
 
     // Check if user is admin
-    if (!user.isStaff && !user.isSuperuser) {
+    if (!admin.isStaff && !admin.isSuperuser) {
       // Not admin - logout and redirect
       await _authService.signOut();
       _navigateToLogin();
@@ -123,7 +131,7 @@ class _WebBootstrapScreenState extends State<WebBootstrapScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            const WebAdminLoginScreen(),
+            const WebLoginScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

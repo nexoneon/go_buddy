@@ -50,6 +50,22 @@ service cloud.firestore {
       }
     }
 
+    // Admins collection rules - for admin email/password login
+    match /admins/{adminId} {
+      // Allow admin to read their own data
+      allow read: if isOwner(adminId);
+      
+      // Allow authenticated users to create their own admin document
+      // (Only when their Firebase Auth UID matches the document ID)
+      allow create: if isOwner(adminId);
+      
+      // Allow admin to update their own data
+      allow update: if isOwner(adminId);
+      
+      // Allow querying admins collection by email for login verification
+      allow list: if isAuthenticated();
+    }
+
     // Services collection rules
     match /services/{serviceId} {
       // Allow any authenticated user to read services
@@ -106,10 +122,23 @@ service cloud.firestore {
                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
     }
     
-    // Admin users can read/write all documents
+    // Helper function to check if user is an admin (from admins collection)
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.is_superuser == true;
+    }
+    
+    // Helper function to check if user is a superuser (from users collection - legacy)
+    function isSuperuser() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+    }
+    
+    // Admin users can read/write all documents (check both admins and users collections)
     match /{document=**} {
-      allow read, write: if isAuthenticated() 
-                         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
+      allow read, write: if isAdmin() || isSuperuser();
     }
   }
 }

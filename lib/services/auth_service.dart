@@ -175,6 +175,63 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sign in with email and password (for admin web login)
+  Future<bool> signInWithEmailPassword({
+    required String email,
+    required String password,
+    required Function() onSuccess,
+    required Function(String errorMessage) onError,
+  }) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      debugPrint('🔐 Signing in with email: $email');
+
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+
+      _isLoading = false;
+      notifyListeners();
+      onSuccess();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _errorMessage = _getEmailErrorMessage(e.code);
+      notifyListeners();
+      onError(_errorMessage!);
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Sign in failed. Please try again.';
+      notifyListeners();
+      onError(_errorMessage!);
+      return false;
+    }
+  }
+
+  /// Get user-friendly error message for email auth
+  String _getEmailErrorMessage(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No account found with this email address.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'invalid-email':
+        return 'Invalid email address format.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      case 'invalid-credential':
+        return 'Invalid email or password.';
+      case 'network-request-failed':
+        return 'Network error. Please check your connection.';
+      default:
+        return 'Sign in failed. Please check your credentials.';
+    }
+  }
+
   /// Get user-friendly error message
   String _getErrorMessage(String code) {
     switch (code) {

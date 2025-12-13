@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'login_screen.dart';
 import '../../config/config.dart';
 import '../../services/auth_service.dart';
-import '../../services/user_service.dart';
-import 'web_admin_login.dart';
+import '../../services/admin_service.dart';
 import 'dashboard_tabs/dashboard_tab.dart';
 import 'dashboard_tabs/categories_tab.dart';
 import 'dashboard_tabs/services_tab.dart';
@@ -24,7 +24,7 @@ class WebAdminDashboard extends StatefulWidget {
 
 class _WebAdminDashboardState extends State<WebAdminDashboard> {
   final AuthService _authService = AuthService();
-  final UserService _userService = UserService();
+  final AdminService _adminService = AdminService();
   int _selectedIndex = 0;
   bool _isSidebarOpen = true; // Sidebar toggle state
 
@@ -49,7 +49,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   Future<void> _loadUserData() async {
     final uid = _authService.currentUser?.uid;
     if (uid != null) {
-      await _userService.getUser(uid);
+      await _adminService.getAdmin(uid);
       if (mounted) setState(() {});
     }
   }
@@ -78,20 +78,100 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
     if (confirm == true) {
       await _authService.signOut();
-      _userService.clearUser();
+      _adminService.clearAdmin();
 
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const WebAdminLoginScreen()),
+          MaterialPageRoute(builder: (context) => const WebLoginScreen()),
           (route) => false,
         );
       }
     }
   }
 
+  void _showEditProfileDialog() {
+    final admin = _adminService.currentAdmin;
+    final firstNameController = TextEditingController(
+      text: admin?.firstName ?? '',
+    );
+    final lastNameController = TextEditingController(
+      text: admin?.lastName ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.person_outline, color: AppTheme.primaryColor),
+            SizedBox(width: 8),
+            Text('Edit Profile'),
+          ],
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: firstNameController,
+                decoration: const InputDecoration(
+                  labelText: 'First Name',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: lastNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final uid = _authService.currentUser?.uid;
+              if (uid != null) {
+                final success = await _adminService.updateAdmin(
+                  uid: uid,
+                  firstName: firstNameController.text.trim(),
+                  lastName: lastNameController.text.trim(),
+                );
+                if (success && mounted) {
+                  Navigator.pop(context);
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Profile updated successfully!'),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = _userService.currentUser;
+    final admin = _adminService.currentAdmin;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 800;
 
@@ -208,7 +288,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                               CircleAvatar(
                                 backgroundColor: AppTheme.primaryColor,
                                 child: Text(
-                                  user?.firstName
+                                  admin?.firstName
                                           ?.substring(0, 1)
                                           .toUpperCase() ??
                                       'A',
@@ -224,7 +304,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      user?.fullName ?? 'Admin',
+                                      admin?.fullName ?? 'Admin',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w600,
@@ -232,7 +312,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
-                                      user?.phoneNumber ?? '',
+                                      admin?.email ?? '',
                                       style: const TextStyle(
                                         color: Colors.white70,
                                         fontSize: 12,
@@ -241,6 +321,15 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                     ),
                                   ],
                                 ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                                onPressed: _showEditProfileDialog,
+                                tooltip: 'Edit Profile',
                               ),
                               IconButton(
                                 icon: const Icon(

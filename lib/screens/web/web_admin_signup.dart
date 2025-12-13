@@ -1,32 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../config/config.dart';
-import '../../services/auth_service.dart';
 import '../../services/admin_service.dart';
 import '../../models/admin_model.dart';
-import 'web_admin_dashboard.dart';
-import 'web_admin_signup.dart';
+import 'login_screen.dart';
 
-/// Web Admin Login Screen
+/// Web Admin Signup Screen
 ///
-/// Email and password authentication for admin access only
-class WebLoginScreen extends StatefulWidget {
-  const WebLoginScreen({super.key});
+/// Email and password signup for creating new admin accounts
+class WebAdminSignupScreen extends StatefulWidget {
+  const WebAdminSignupScreen({super.key});
 
   @override
-  State<WebLoginScreen> createState() => _WebLoginScreenState();
+  State<WebAdminSignupScreen> createState() => _WebAdminSignupScreenState();
 }
 
-class _WebLoginScreenState extends State<WebLoginScreen>
+class _WebAdminSignupScreenState extends State<WebAdminSignupScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final _confirmPasswordController = TextEditingController();
   final AdminService _adminService = AdminService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   String? _errorMessage;
+  String? _successMessage;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -58,91 +62,96 @@ class _WebLoginScreenState extends State<WebLoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() async {
+  void _handleSignup() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
+        _successMessage = null;
       });
 
       final email = _emailController.text.trim();
       final password = _passwordController.text;
+      final firstName = _firstNameController.text.trim();
+      final lastName = _lastNameController.text.trim();
 
-      // First, authenticate with Firebase
-      await _authService.signInWithEmailPassword(
-        email: email,
-        password: password,
-        onSuccess: () async {
-          // Authentication successful, now check if admin exists in Firestore
-          final uid = _authService.currentUser?.uid;
+      try {
+        // Create Firebase Auth user
+        final userCredential = await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
 
-          if (uid == null) {
-            setState(() {
-              _isLoading = false;
-              _errorMessage = 'Authentication failed. Please try again.';
-            });
-            return;
-          }
-
-          // Check if admin exists
-          var admin = await _adminService.getAdmin(uid);
-
-          if (admin == null) {
-            // Admin doesn't exist in Firestore, create the admin document
-            final newAdmin = AdminModel(
-              uid: uid,
-              email: email,
-              isActive: true,
-              isStaff: true,
-              isSuperuser: true,
-              dateJoined: DateTime.now(),
-            );
-
-            final success = await _adminService.createAdmin(newAdmin);
-            if (!success) {
-              setState(() {
-                _isLoading = false;
-                _errorMessage =
-                    'Failed to create admin profile. Please try again.';
-              });
-              return;
-            }
-            admin = newAdmin;
-          }
-
-          // Check if admin is active
-          if (!admin!.isActive) {
-            await _authService.signOut();
-            setState(() {
-              _isLoading = false;
-              _errorMessage = 'This admin account has been deactivated.';
-            });
-            return;
-          }
-
-          // Update last login
-          await _adminService.updateLastLogin(uid);
-
-          if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const WebAdminDashboard(),
-              ),
-            );
-          }
-        },
-        onError: (error) {
+        final uid = userCredential.user?.uid;
+        if (uid == null) {
           setState(() {
             _isLoading = false;
-            _errorMessage = error;
+            _errorMessage = 'Failed to create account. Please try again.';
           });
-        },
-      );
+          return;
+        }
+
+        // Create admin document in Firestore
+        final admin = AdminModel(
+          uid: uid,
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          isActive: true,
+          isStaff: true,
+          isSuperuser: true,
+          dateJoined: DateTime.now(),
+        );
+
+        await _adminService.createAdmin(admin);
+
+        setState(() {
+          _isLoading = false;
+          _successMessage = 'Admin account created successfully!';
+        });
+
+        // Wait a moment then navigate to login
+        await Future.delayed(const Duration(seconds: 2));
+
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const WebLoginScreen()),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = _getErrorMessage(e.code);
+        });
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'An error occurred: ${e.toString()}';
+        });
+      }
+    }
+  }
+
+  String _getErrorMessage(String code) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'An account already exists with this email address.';
+      case 'invalid-email':
+        return 'Invalid email address format.';
+      case 'weak-password':
+        return 'Password is too weak. Please use a stronger password.';
+      case 'operation-not-allowed':
+        return 'Email/password accounts are not enabled.';
+      default:
+        return 'Signup failed. Please try again.';
     }
   }
 
@@ -158,27 +167,25 @@ class _WebLoginScreenState extends State<WebLoginScreen>
               children: [
                 // Hero Section (Left)
                 Expanded(flex: 5, child: _buildHeroSection()),
-                // Login Form Section (Right)
-                Expanded(flex: 4, child: _buildLoginSection()),
+                // Signup Form Section (Right)
+                Expanded(flex: 4, child: _buildSignupSection()),
               ],
             );
           } else {
             // Stacked layout for narrower screens
             return Stack(
               children: [
-                // Background gradient
                 Container(
                   decoration: const BoxDecoration(
                     gradient: WebTheme.heroGradient,
                   ),
                 ),
-                // Login form overlay
                 Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 450),
-                      child: _buildLoginCard(),
+                      child: _buildSignupCard(),
                     ),
                   ),
                 ),
@@ -195,7 +202,6 @@ class _WebLoginScreenState extends State<WebLoginScreen>
       decoration: const BoxDecoration(gradient: WebTheme.heroGradient),
       child: Stack(
         children: [
-          // Decorative elements
           Positioned(
             top: -100,
             right: -100,
@@ -220,7 +226,6 @@ class _WebLoginScreenState extends State<WebLoginScreen>
               ),
             ),
           ),
-          // Content
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 48),
@@ -229,7 +234,6 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -237,15 +241,14 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
-                      Icons.admin_panel_settings_rounded,
+                      Icons.person_add_rounded,
                       size: 48,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 40),
-                  // Welcome text
                   const Text(
-                    'Admin Portal\n7 Pay Services',
+                    'Create Admin\nAccount',
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w700,
@@ -256,7 +259,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Manage orders, users, and services\nfrom your centralized dashboard.',
+                    'Register as an administrator to manage\nthe 7 Pay Services platform.',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.85),
@@ -264,17 +267,19 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                     ),
                   ),
                   const SizedBox(height: 40),
-                  // Feature highlights
                   _buildFeatureItem(
-                    Icons.dashboard_rounded,
-                    'Complete Dashboard',
+                    Icons.admin_panel_settings_rounded,
+                    'Full Admin Access',
                   ),
                   const SizedBox(height: 14),
-                  _buildFeatureItem(Icons.people_rounded, 'User Management'),
+                  _buildFeatureItem(
+                    Icons.dashboard_rounded,
+                    'Dashboard Access',
+                  ),
                   const SizedBox(height: 14),
                   _buildFeatureItem(
-                    Icons.security_rounded,
-                    'Secure Admin Access',
+                    Icons.manage_accounts_rounded,
+                    'User Management',
                   ),
                 ],
               ),
@@ -309,7 +314,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
     );
   }
 
-  Widget _buildLoginSection() {
+  Widget _buildSignupSection() {
     return Container(
       color: AppTheme.backgroundColor,
       child: Center(
@@ -317,14 +322,14 @@ class _WebLoginScreenState extends State<WebLoginScreen>
           padding: WebTheme.pagePadding,
           child: Container(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: _buildLoginCard(),
+            child: _buildSignupCard(),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLoginCard() {
+  Widget _buildSignupCard() {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
@@ -342,53 +347,59 @@ class _WebLoginScreenState extends State<WebLoginScreen>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Admin Badge
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.shield_rounded,
-                          size: 18,
-                          color: AppTheme.primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Admin Access Only',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
                 // Header
                 Text(
-                  'Welcome Back',
+                  'Create Account',
                   style: WebTheme.displayMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in with your admin credentials',
+                  'Register a new admin account',
                   style: WebTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
+
+                // Name Fields Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _firstNameController,
+                        decoration: WebTheme.inputDecoration(
+                          labelText: 'First Name',
+                          hintText: 'John',
+                          prefixIcon: const Icon(Icons.person_outline),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _lastNameController,
+                        decoration: WebTheme.inputDecoration(
+                          labelText: 'Last Name',
+                          hintText: 'Doe',
+                          prefixIcon: const Icon(Icons.person_outline),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
                 // Email Field
                 TextFormField(
@@ -403,13 +414,13 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!value.contains('@')) {
+                    if (!value.contains('@') || !value.contains('.')) {
                       return 'Please enter a valid email';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // Password Field
                 TextFormField(
@@ -432,7 +443,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'Please enter a password';
                     }
                     if (value.length < 6) {
                       return 'Password must be at least 6 characters';
@@ -441,6 +452,40 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                   },
                 ),
                 const SizedBox(height: 16),
+
+                // Confirm Password Field
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  decoration: WebTheme.inputDecoration(
+                    labelText: 'Confirm Password',
+                    hintText: '••••••••',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () {
+                        setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        );
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please confirm your password';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
 
                 // Error Message
                 if (_errorMessage != null) ...[
@@ -469,13 +514,40 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                   const SizedBox(height: 16),
                 ],
 
-                const SizedBox(height: 16),
+                // Success Message
+                if (_successMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.successColor.withAlpha(26),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle_outline,
+                          color: AppTheme.successColor,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _successMessage!,
+                            style: const TextStyle(
+                              color: AppTheme.successColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
-                // Sign In Button
+                // Sign Up Button
                 SizedBox(
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
+                    onPressed: _isLoading ? null : _handleSignup,
                     style: WebTheme.primaryButtonStyle,
                     child: _isLoading
                         ? const SizedBox(
@@ -489,7 +561,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                             ),
                           )
                         : const Text(
-                            'Sign In',
+                            'Create Account',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -499,40 +571,29 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                 ),
                 const SizedBox(height: 24),
 
-                // Security note
+                // Already have account link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.lock_rounded, size: 16, color: Colors.grey[500]),
-                    const SizedBox(width: 8),
                     Text(
-                      'Secure admin authentication',
-                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      'Already have an account? ',
+                      style: WebTheme.bodyMedium,
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => const WebLoginScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Sign In',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-
-                // Sign Up Link
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: [
-                //     Text("Don't have an account? ", style: WebTheme.bodyMedium),
-                //     TextButton(
-                //       onPressed: () {
-                //         Navigator.of(context).pushReplacement(
-                //           MaterialPageRoute(
-                //             builder: (context) => const WebAdminSignupScreen(),
-                //           ),
-                //         );
-                //       },
-                //       child: const Text(
-                //         'Sign Up',
-                //         style: TextStyle(fontWeight: FontWeight.w600),
-                //       ),
-                //     ),
-                //   ],
-                // ),
               ],
             ),
           ),

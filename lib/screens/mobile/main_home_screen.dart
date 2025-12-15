@@ -846,9 +846,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.75, // More space for content
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.58, // Taller cards for larger images
                 ),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
@@ -902,15 +902,15 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               children: [
                 // Category Image or Icon
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 100,
+                  height: 100,
                   decoration: BoxDecoration(
                     color: Color(category.color).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: _buildCategoryImage(category),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Flexible(
                   child: Text(
                     category.name,
@@ -918,19 +918,19 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                       color: Color(0xFF2C3E50),
                     ),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   '$count Services',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -947,26 +947,26 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         child: Image.network(
           imageUrl,
-          width: 50,
-          height: 50,
+          width: 100,
+          height: 100,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             // Fallback to icon on error
             return Icon(
               Icons.category_outlined,
               color: Color(category.color),
-              size: 26,
+              size: 50,
             );
           },
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return Center(
               child: SizedBox(
-                width: 20,
-                height: 20,
+                width: 24,
+                height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Color(category.color),
@@ -986,7 +986,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return Icon(
       Icons.category_outlined,
       color: Color(category.color),
-      size: 26,
+      size: 50,
     );
   }
 

@@ -15,6 +15,10 @@ class ServiceModel {
   final String? goBuddyCares;
   final bool accept;
 
+  // Rating fields
+  final double rating;
+  final int ratingCount;
+
   ServiceModel({
     required this.id,
     required this.name,
@@ -27,6 +31,8 @@ class ServiceModel {
     this.note,
     this.goBuddyCares,
     this.accept = true,
+    this.rating = 0.0,
+    this.ratingCount = 0,
   });
 
   factory ServiceModel.fromFirestore(DocumentSnapshot doc) {
@@ -43,6 +49,8 @@ class ServiceModel {
       note: data['note'],
       goBuddyCares: data['go_buddy_cares'],
       accept: data['accept'] ?? true,
+      rating: (data['rating'] ?? 0.0).toDouble(),
+      ratingCount: (data['rating_count'] ?? 0).toInt(),
     );
   }
 
@@ -58,6 +66,8 @@ class ServiceModel {
       'note': note,
       'go_buddy_cares': goBuddyCares,
       'accept': accept,
+      'rating': rating,
+      'rating_count': ratingCount,
     };
   }
 
@@ -73,6 +83,8 @@ class ServiceModel {
     String? note,
     String? goBuddyCares,
     bool? accept,
+    double? rating,
+    int? ratingCount,
   }) {
     return ServiceModel(
       id: id ?? this.id,
@@ -88,6 +100,8 @@ class ServiceModel {
       note: note ?? this.note,
       goBuddyCares: goBuddyCares ?? this.goBuddyCares,
       accept: accept ?? this.accept,
+      rating: rating ?? this.rating,
+      ratingCount: ratingCount ?? this.ratingCount,
     );
   }
 }

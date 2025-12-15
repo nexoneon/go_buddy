@@ -175,6 +175,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     final addressController = TextEditingController();
     final dateController = TextEditingController();
     final timeController = TextEditingController();
+    final instructionsController =
+        TextEditingController(); // Customer instructions
     DateTime? selectedDate;
     bool isBooking = false;
     bool isFormValid = false;
@@ -575,6 +577,76 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             ),
                             const SizedBox(height: 24),
 
+                            // Customer Instructions (Optional)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withAlpha(15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.blue.withAlpha(50),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.message_outlined,
+                                        color: Colors.blue[700],
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Special Instructions (Optional)',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: instructionsController,
+                                    maxLines: 3,
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          'e.g., "Please bring a 2m ladder", "Pet in house, be careful"',
+                                      hintStyle: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[500],
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey[300]!,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey[300]!,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF0D7377),
+                                          width: 2,
+                                        ),
+                                      ),
+                                      contentPadding: const EdgeInsets.all(12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
                             // Terms & Conditions section
                             Container(
                               padding: const EdgeInsets.all(16),
@@ -732,6 +804,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                               userPhone: user.phoneNumber ?? '',
                                               createdAt: DateTime.now(),
                                               termsAccepted: termsAccepted,
+                                              customerInstructions:
+                                                  instructionsController
+                                                      .text
+                                                      .isNotEmpty
+                                                  ? instructionsController.text
+                                                  : null,
                                             );
 
                                             await _orderService.createOrder(
@@ -1124,6 +1202,48 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            // Rating Display
+                            if (service.rating > 0) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withAlpha(26),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.star,
+                                      color: Colors.orange,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      service.rating.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (service.ratingCount > 0) ...[
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '(${service.ratingCount})',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),

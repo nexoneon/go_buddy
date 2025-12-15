@@ -75,6 +75,7 @@ class OrderModel {
   final String userPhone;
   final DateTime createdAt;
   final bool termsAccepted;
+  final String? customerInstructions; // Special instructions from customer
 
   OrderModel({
     required this.id,
@@ -90,6 +91,7 @@ class OrderModel {
     required this.userPhone,
     required this.createdAt,
     this.termsAccepted = false,
+    this.customerInstructions,
   });
 
   factory OrderModel.fromFirestore(DocumentSnapshot doc) {
@@ -108,6 +110,7 @@ class OrderModel {
       userPhone: data['user_phone'] ?? '',
       createdAt: (data['created_at'] as Timestamp).toDate(),
       termsAccepted: data['terms_accepted'] ?? false,
+      customerInstructions: data['customer_instructions'],
     );
   }
 
@@ -125,6 +128,7 @@ class OrderModel {
       'user_phone': userPhone,
       'created_at': Timestamp.fromDate(createdAt),
       'terms_accepted': termsAccepted,
+      'customer_instructions': customerInstructions,
     };
   }
 
@@ -142,6 +146,7 @@ class OrderModel {
     String? userPhone,
     DateTime? createdAt,
     bool? termsAccepted,
+    String? customerInstructions,
   }) {
     return OrderModel(
       id: id ?? this.id,
@@ -157,6 +162,7 @@ class OrderModel {
       userPhone: userPhone ?? this.userPhone,
       createdAt: createdAt ?? this.createdAt,
       termsAccepted: termsAccepted ?? this.termsAccepted,
+      customerInstructions: customerInstructions ?? this.customerInstructions,
     );
   }
 }

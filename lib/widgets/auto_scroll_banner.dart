@@ -11,7 +11,7 @@ class AutoScrollBanner extends StatefulWidget {
     super.key,
     required this.images,
     this.interval = const Duration(seconds: 3),
-    this.height = 160,
+    this.height = 210,
   });
 
   @override

@@ -135,13 +135,35 @@ class _OrdersTabState extends State<OrdersTab> {
             );
 
             // Format Created At
-            String dateStr = 'Unknown';
+            String createdDateStr = 'Unknown';
             if (order['created_at'] != null) {
               final timestamp = order['created_at'] as Timestamp;
               final date = timestamp.toDate();
-              dateStr =
+              createdDateStr =
                   '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
             }
+
+            // Format Booking/Schedule Date
+            String scheduleDateStr = 'Not scheduled';
+            if (order['booking_date'] != null) {
+              final timestamp = order['booking_date'] as Timestamp;
+              final date = timestamp.toDate();
+              scheduleDateStr = '${date.day}/${date.month}/${date.year}';
+            }
+
+            // Booking Time
+            final bookingTime = order['booking_time'] ?? 'No time';
+
+            // Address
+            final address = order['address'] ?? 'No address';
+
+            // Rating
+            final rating = order['rating']?.toDouble() ?? 0.0;
+
+            // Order ID (short version)
+            final orderId = orderDoc.id.length > 8
+                ? orderDoc.id.substring(0, 8).toUpperCase()
+                : orderDoc.id.toUpperCase();
 
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
@@ -154,24 +176,24 @@ class _OrdersTabState extends State<OrdersTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top row: Order number, service name, status
+                    // Top row: Order ID, service name, status
                     Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Center(
-                            child: Text(
-                              '#${index + 1}',
-                              style: TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                          child: Text(
+                            '#$orderId',
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
                             ),
                           ),
                         ),
@@ -280,18 +302,68 @@ class _OrdersTabState extends State<OrdersTab> {
                           order['user_phone'] ?? 'No phone',
                           Colors.green,
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Address row
+                    _buildOrderInfoChip(Icons.location_on, address, Colors.red),
+                    const SizedBox(height: 8),
+                    // Schedule and Created time row
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
                         _buildOrderInfoChip(
-                          Icons.calendar_today,
-                          order['booking_time'] ?? 'No time',
+                          Icons.event,
+                          'Schedule: $scheduleDateStr',
+                          Colors.purple,
+                        ),
+                        _buildOrderInfoChip(
+                          Icons.schedule,
+                          'Time: $bookingTime',
                           Colors.orange,
                         ),
                         _buildOrderInfoChip(
                           Icons.access_time,
-                          'Ordered: $dateStr',
+                          'Ordered: $createdDateStr',
                           Colors.grey,
                         ),
                       ],
                     ),
+                    // Rating (only show if order is completed and has rating)
+                    if (currentStatus == OrderStatus.completed &&
+                        rating > 0) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 16,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Rating: ${rating.toStringAsFixed(1)}/5',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.amber,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

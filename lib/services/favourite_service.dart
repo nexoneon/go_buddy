@@ -17,7 +17,6 @@ class FavouriteService {
       'service_name': service.name,
       'service_price': service.price,
       'service_note': service.note,
-      'category_id': service.categoryId,
       'added_at': FieldValue.serverTimestamp(),
     });
   }

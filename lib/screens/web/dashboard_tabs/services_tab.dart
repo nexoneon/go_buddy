@@ -1,10 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../../config/config.dart';
 import '../../../models/service_model.dart';
-import '../../../models/category_model.dart';
-import '../../../services/category_service.dart';
 
 class ServicesTab extends StatefulWidget {
   const ServicesTab({super.key});
@@ -14,8 +15,6 @@ class ServicesTab extends StatefulWidget {
 }
 
 class _ServicesTabState extends State<ServicesTab> {
-  final CategoryService _categoryService = CategoryService();
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -98,7 +97,7 @@ class _ServicesTabState extends State<ServicesTab> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // Service Icon
+            // Service Image or Icon
             Container(
               width: 60,
               height: 60,
@@ -106,10 +105,47 @@ class _ServicesTabState extends State<ServicesTab> {
                 color: AppTheme.primaryColor.withAlpha(26),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                Icons.build_outlined,
-                color: AppTheme.primaryColor,
-                size: 28,
+              child: Builder(
+                builder: (context) {
+                  final imageUrl = service.imageUrl;
+                  if (imageUrl != null && imageUrl.isNotEmpty) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        width: 60,
+                        height: 60,
+                        cacheWidth: 120,
+                        cacheHeight: 120,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.build_outlined,
+                            color: AppTheme.primaryColor,
+                            size: 28,
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                  return Icon(
+                    Icons.build_outlined,
+                    color: AppTheme.primaryColor,
+                    size: 28,
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -131,6 +167,28 @@ class _ServicesTabState extends State<ServicesTab> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      // isActive badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: service.isActive
+                              ? Colors.green.withAlpha(26)
+                              : Colors.red.withAlpha(26),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          service.isActive ? 'Active' : 'Inactive',
+                          style: TextStyle(
+                            color: service.isActive ? Colors.green : Colors.red,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
                       if (service.isFavourite)
                         const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
@@ -144,17 +202,83 @@ class _ServicesTabState extends State<ServicesTab> {
                         const Icon(Icons.cancel, color: Colors.red, size: 16),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      Text(
-                        '₹${service.price.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0D7377),
+                      // Price with discount calculation
+                      if (service.percentage != null &&
+                          service.percentage! > 0) ...[
+                        // Discounted price
+                        Text(
+                          '₹${(service.price * (1 - service.percentage! / 100)).toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0D7377),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        // Original price (struck through)
+                        Text(
+                          '₹${service.price.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Percentage badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withAlpha(26),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${service.percentage!.toStringAsFixed(0)}% OFF',
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        // Regular price (no discount)
+                        Text(
+                          '₹${service.price.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0D7377),
+                          ),
+                        ),
+                      ],
+                      // Rating
+                      if (service.rating > 0) ...[
+                        const SizedBox(width: 8),
+                        Icon(Icons.star, color: Colors.amber, size: 14),
+                        const SizedBox(width: 2),
+                        Text(
+                          service.rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber,
+                          ),
+                        ),
+                        Text(
+                          ' (${service.ratingCount})',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -198,14 +322,20 @@ class _ServicesTabState extends State<ServicesTab> {
     final goBuddyCaresController = TextEditingController(
       text: service?.goBuddyCares ?? '',
     );
+    final percentageController = TextEditingController(
+      text: service?.percentage?.toString() ?? '',
+    );
 
     bool isFavourite = service?.isFavourite ?? false;
     bool acceptService = service?.accept ?? true;
-    String? selectedCategoryId = service?.categoryId.isNotEmpty == true
-        ? service!.categoryId
-        : null;
     bool isSaving = false;
     int currentStep = 0;
+
+    // Image state for upload
+    Uint8List? selectedImageBytes;
+    String? selectedImageName;
+    String? existingImageUrl = service?.imageUrl;
+    final String? originalImageUrl = service?.imageUrl;
 
     showDialog(
       context: context,
@@ -332,47 +462,155 @@ class _ServicesTabState extends State<ServicesTab> {
                       v?.isEmpty == true ? 'Price is required' : null,
                 ),
                 const SizedBox(height: 16),
-                StreamBuilder<List<CategoryModel>>(
-                  stream: _categoryService.getAllCategories(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    final categories = snapshot.data!;
-                    return DropdownButtonFormField<String>(
-                      value: categories.any((c) => c.id == selectedCategoryId)
-                          ? selectedCategoryId
-                          : null,
-                      decoration: buildInputDecoration(
-                        'Category',
-                        'Select category',
-                        Icons.category_outlined,
-                      ),
-                      items: categories.map((category) {
-                        return DropdownMenuItem(
-                          value: category.id,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: Color(category.color),
-                                  shape: BoxShape.circle,
+                // Image Upload Section
+                buildSectionHeader(
+                  'Service Image',
+                  Icons.image_outlined,
+                  Colors.purple,
+                ),
+                Center(
+                  child: GestureDetector(
+                    onTap: isSaving
+                        ? null
+                        : () async {
+                            try {
+                              final ImagePicker picker = ImagePicker();
+                              final XFile? image = await picker.pickImage(
+                                source: ImageSource.gallery,
+                                maxWidth: 512,
+                                maxHeight: 512,
+                                imageQuality: 85,
+                              );
+
+                              if (image != null) {
+                                final bytes = await image.readAsBytes();
+                                setState(() {
+                                  selectedImageBytes = bytes;
+                                  selectedImageName = image.name;
+                                  existingImageUrl = null;
+                                });
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error picking image: $e'),
+                                  backgroundColor: Colors.red,
                                 ),
+                              );
+                            }
+                          },
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!, width: 2),
+                      ),
+                      child: selectedImageBytes != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.memory(
+                                    selectedImageBytes!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedImageBytes = null;
+                                          selectedImageName = null;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 10),
-                              Text(category.name),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) =>
-                          setState(() => selectedCategoryId = val),
-                      validator: (v) =>
-                          v == null ? 'Category is required' : null,
-                    );
-                  },
+                            )
+                          : existingImageUrl != null &&
+                                existingImageUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.network(
+                                    existingImageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        _buildImagePlaceholder(),
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          existingImageUrl = null;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _buildImagePlaceholder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    selectedImageBytes != null
+                        ? 'Tap to change image'
+                        : existingImageUrl != null
+                        ? 'Tap to change image'
+                        : 'Tap to upload image',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Percentage (Discount) field
+                TextFormField(
+                  controller: percentageController,
+                  decoration: buildInputDecoration(
+                    'Discount Percentage',
+                    'e.g. 10 for 10% off',
+                    Icons.percent,
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 buildSectionHeader(
@@ -781,48 +1019,89 @@ class _ServicesTabState extends State<ServicesTab> {
                                     if (formKey.currentState!.validate()) {
                                       setState(() => isSaving = true);
 
-                                      final newService = ServiceModel(
-                                        id: service?.id ?? '',
-                                        name: nameController.text.trim(),
-                                        price: double.parse(
-                                          priceController.text.trim(),
-                                        ),
-                                        categoryId: selectedCategoryId ?? '',
-                                        isFavourite: isFavourite,
-                                        customerResponsibility:
-                                            customerResponsibilityController
-                                                .text
-                                                .trim()
-                                                .isNotEmpty
-                                            ? customerResponsibilityController
-                                                  .text
-                                                  .trim()
-                                            : null,
-                                        providerResponsibility:
-                                            providerResponsibilityController
-                                                .text
-                                                .trim()
-                                                .isNotEmpty
-                                            ? providerResponsibilityController
-                                                  .text
-                                                  .trim()
-                                            : null,
-                                        note:
-                                            noteController.text
-                                                .trim()
-                                                .isNotEmpty
-                                            ? noteController.text.trim()
-                                            : null,
-                                        goBuddyCares:
-                                            goBuddyCaresController.text
-                                                .trim()
-                                                .isNotEmpty
-                                            ? goBuddyCaresController.text.trim()
-                                            : null,
-                                        accept: acceptService,
-                                      );
+                                      String? imageUrl = existingImageUrl;
 
                                       try {
+                                        // Check if image was removed or replaced
+                                        final bool imageWasRemoved =
+                                            originalImageUrl != null &&
+                                            originalImageUrl.isNotEmpty &&
+                                            existingImageUrl == null &&
+                                            selectedImageBytes == null;
+
+                                        final bool imageWasReplaced =
+                                            originalImageUrl != null &&
+                                            originalImageUrl.isNotEmpty &&
+                                            selectedImageBytes != null;
+
+                                        // Delete old image from storage if removed or replaced
+                                        if (imageWasRemoved ||
+                                            imageWasReplaced) {
+                                          await _deleteServiceImage(
+                                            originalImageUrl,
+                                          );
+                                        }
+
+                                        // Upload new image if selected
+                                        if (selectedImageBytes != null) {
+                                          imageUrl = await _uploadServiceImage(
+                                            selectedImageBytes!,
+                                            selectedImageName ??
+                                                'service_image.png',
+                                          );
+                                        }
+
+                                        final newService = ServiceModel(
+                                          id: service?.id ?? '',
+                                          name: nameController.text.trim(),
+                                          price: double.parse(
+                                            priceController.text.trim(),
+                                          ),
+                                          isFavourite: isFavourite,
+                                          imageUrl: imageUrl,
+                                          percentage:
+                                              percentageController.text
+                                                  .trim()
+                                                  .isNotEmpty
+                                              ? double.tryParse(
+                                                  percentageController.text
+                                                      .trim(),
+                                                )
+                                              : null,
+                                          customerResponsibility:
+                                              customerResponsibilityController
+                                                  .text
+                                                  .trim()
+                                                  .isNotEmpty
+                                              ? customerResponsibilityController
+                                                    .text
+                                                    .trim()
+                                              : null,
+                                          providerResponsibility:
+                                              providerResponsibilityController
+                                                  .text
+                                                  .trim()
+                                                  .isNotEmpty
+                                              ? providerResponsibilityController
+                                                    .text
+                                                    .trim()
+                                              : null,
+                                          note:
+                                              noteController.text
+                                                  .trim()
+                                                  .isNotEmpty
+                                              ? noteController.text.trim()
+                                              : null,
+                                          goBuddyCares:
+                                              goBuddyCaresController.text
+                                                  .trim()
+                                                  .isNotEmpty
+                                              ? goBuddyCaresController.text
+                                                    .trim()
+                                              : null,
+                                          accept: acceptService,
+                                        );
+
                                         if (service == null) {
                                           await FirebaseFirestore.instance
                                               .collection('services')
@@ -930,6 +1209,61 @@ class _ServicesTabState extends State<ServicesTab> {
           .collection('services')
           .doc(serviceId)
           .delete();
+    }
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.add_photo_alternate_outlined,
+          size: 40,
+          color: Colors.grey[400],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Add Image',
+          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+        ),
+      ],
+    );
+  }
+
+  /// Upload service image to Firebase Storage and return the download URL
+  Future<String> _uploadServiceImage(
+    Uint8List imageBytes,
+    String fileName,
+  ) async {
+    try {
+      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final String storagePath = 'services/${timestamp}_$fileName';
+
+      final Reference ref = FirebaseStorage.instance.ref().child(storagePath);
+      final UploadTask uploadTask = ref.putData(
+        imageBytes,
+        SettableMetadata(contentType: 'image/png'),
+      );
+
+      final TaskSnapshot snapshot = await uploadTask;
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Failed to upload image: $e');
+    }
+  }
+
+  /// Delete service image from Firebase Storage
+  Future<void> _deleteServiceImage(String imageUrl) async {
+    try {
+      if (imageUrl.isNotEmpty) {
+        final Reference ref = FirebaseStorage.instance.refFromURL(imageUrl);
+        await ref.delete();
+      }
+    } catch (e) {
+      // Image might not exist, ignore error
+      debugPrint('Failed to delete image: $e');
     }
   }
 }

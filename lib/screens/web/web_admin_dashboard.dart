@@ -4,7 +4,6 @@ import '../../config/config.dart';
 import '../../services/auth_service.dart';
 import '../../services/admin_service.dart';
 import 'dashboard_tabs/dashboard_tab.dart';
-import 'dashboard_tabs/categories_tab.dart';
 import 'dashboard_tabs/services_tab.dart';
 import 'dashboard_tabs/orders_tab.dart';
 import 'dashboard_tabs/users_tab.dart';
@@ -30,7 +29,6 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
   final List<String> _menuItems = [
     'Dashboard',
-    'Categories',
     'Services',
     'Orders',
     'Users',
@@ -455,20 +453,18 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       case 0:
         return Icons.dashboard;
       case 1:
-        return Icons.category; // Categories
-      case 2:
         return Icons.inventory_2; // Services
+      case 2:
+        return Icons.shopping_cart; // Orders
       case 3:
-        return Icons.shopping_cart;
+        return Icons.people; // Users
       case 4:
-        return Icons.people;
+        return Icons.image; // Images
       case 5:
-        return Icons.image;
-      case 6:
         return Icons.support_agent; // User Support
-      case 7:
+      case 6:
         return Icons.help_outline; // Help
-      // case 8:
+      // case 7:
       //   return Icons.settings;
       default:
         return Icons.dashboard;
@@ -480,20 +476,18 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       case 0:
         return const DashboardTab();
       case 1:
-        return const CategoriesTab();
-      case 2:
         return const ServicesTab();
-      case 3:
+      case 2:
         return const OrdersTab();
-      case 4:
+      case 3:
         return const UsersTab();
-      case 5:
+      case 4:
         return const ImagesTab();
-      case 6:
+      case 5:
         return const UserSupportTab();
-      case 7:
+      case 6:
         return const HelpTab();
-      // case 8:
+      // case 7:
       //   return _buildSettings();
       default:
         return const DashboardTab();

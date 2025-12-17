@@ -4,7 +4,6 @@ class ServiceModel {
   final String id;
   final String name;
   final double price;
-  final String categoryId;
   final bool isFavourite;
   final bool isActive;
 
@@ -19,11 +18,14 @@ class ServiceModel {
   final double rating;
   final int ratingCount;
 
+  // New fields
+  final String? imageUrl;
+  final double? percentage; // Discount percentage
+
   ServiceModel({
     required this.id,
     required this.name,
     required this.price,
-    this.categoryId = '',
     this.isFavourite = false,
     this.isActive = true,
     this.customerResponsibility,
@@ -33,6 +35,8 @@ class ServiceModel {
     this.accept = true,
     this.rating = 0.0,
     this.ratingCount = 0,
+    this.imageUrl,
+    this.percentage,
   });
 
   factory ServiceModel.fromFirestore(DocumentSnapshot doc) {
@@ -41,7 +45,6 @@ class ServiceModel {
       id: doc.id,
       name: data['name'] ?? '',
       price: (data['price'] ?? 0.0).toDouble(),
-      categoryId: data['category_id'] ?? '',
       isFavourite: data['is_favourite'] ?? false,
       isActive: data['is_active'] ?? true,
       customerResponsibility: data['customer_responsibility'],
@@ -51,6 +54,10 @@ class ServiceModel {
       accept: data['accept'] ?? true,
       rating: (data['rating'] ?? 0.0).toDouble(),
       ratingCount: (data['rating_count'] ?? 0).toInt(),
+      imageUrl: data['image_url'],
+      percentage: data['percentage'] != null
+          ? (data['percentage'] as num).toDouble()
+          : null,
     );
   }
 
@@ -58,7 +65,6 @@ class ServiceModel {
     return {
       'name': name,
       'price': price,
-      'category_id': categoryId,
       'is_favourite': isFavourite,
       'is_active': isActive,
       'customer_responsibility': customerResponsibility,
@@ -68,6 +74,8 @@ class ServiceModel {
       'accept': accept,
       'rating': rating,
       'rating_count': ratingCount,
+      'image_url': imageUrl,
+      'percentage': percentage,
     };
   }
 
@@ -75,7 +83,6 @@ class ServiceModel {
     String? id,
     String? name,
     double? price,
-    String? categoryId,
     bool? isFavourite,
     bool? isActive,
     String? customerResponsibility,
@@ -85,12 +92,13 @@ class ServiceModel {
     bool? accept,
     double? rating,
     int? ratingCount,
+    String? imageUrl,
+    double? percentage,
   }) {
     return ServiceModel(
       id: id ?? this.id,
       name: name ?? this.name,
       price: price ?? this.price,
-      categoryId: categoryId ?? this.categoryId,
       isFavourite: isFavourite ?? this.isFavourite,
       isActive: isActive ?? this.isActive,
       customerResponsibility:
@@ -102,6 +110,8 @@ class ServiceModel {
       accept: accept ?? this.accept,
       rating: rating ?? this.rating,
       ratingCount: ratingCount ?? this.ratingCount,
+      imageUrl: imageUrl ?? this.imageUrl,
+      percentage: percentage ?? this.percentage,
     );
   }
 }

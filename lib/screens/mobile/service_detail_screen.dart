@@ -115,9 +115,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     if (user.gender == null || user.gender!.isEmpty) {
       missingFields.add('Gender');
     }
-    if (user.address == null || user.address!.isEmpty) {
-      missingFields.add('Address');
-    }
 
     if (missingFields.isNotEmpty && mounted) {
       // Show dialog to ask user to complete profile
@@ -170,7 +167,43 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       return;
     }
 
-    // Profile is complete, proceed with booking dialog
+    // Check if user has any addresses
+    final defaultAddress = await _addressService.getDefaultOrLatestAddress(uid);
+    if (defaultAddress == null && mounted) {
+      // No addresses found, redirect to address screen
+      final shouldAddAddress = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Add Address'),
+          content: const Text(
+            'Please add a delivery address before booking a service.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0D7377),
+              ),
+              child: const Text('Add Address'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldAddAddress == true && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AddressListScreen()),
+        );
+      }
+      return;
+    }
+
+    // Profile is complete and has address, proceed with booking dialog
     final formKey = GlobalKey<FormState>();
     final addressController = TextEditingController();
     final dateController = TextEditingController();
@@ -182,18 +215,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     bool isFormValid = false;
     bool termsAccepted = false;
 
-    // Pre-fill address logic
-    // Fetch default address
-    _addressService.getDefaultOrLatestAddress(uid).then((addr) {
-      if (addr != null && mounted) {
-        addressController.text = addr.fullAddress;
-      } else if (user.address != null && user.address!.isNotEmpty) {
-        // Fallback to profile address if no saved address found
-        addressController.text = user.address!;
-      }
-      // Note: We can't easily setState here because we are outside the bottom sheet's StatefulBuilder yet.
-      // But since we pass controller to the builder, it should show up.
-    });
+    // Pre-fill address with default address
+    if (defaultAddress != null) {
+      addressController.text = defaultAddress.fullAddress;
+    }
 
     // Function to check if all fields are valid
     void checkFormValidity(StateSetter setDialogState) {

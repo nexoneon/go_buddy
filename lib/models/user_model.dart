@@ -8,7 +8,6 @@ class UserModel {
   final String? firstName;
   final String? lastName;
   final String? profilePicture;
-  final String? address;
   final DateTime? dateOfBirth;
   final String? gender;
   final bool isActive;
@@ -23,7 +22,6 @@ class UserModel {
     this.firstName,
     this.lastName,
     this.profilePicture,
-    this.address,
     this.dateOfBirth,
     this.gender,
     this.isActive = true,
@@ -55,7 +53,6 @@ class UserModel {
       firstName: data['first_name'],
       lastName: data['last_name'],
       profilePicture: data['profile_picture'],
-      address: data['address'],
       dateOfBirth: data['date_of_birth'] != null
           ? (data['date_of_birth'] as Timestamp).toDate()
           : null,
@@ -79,7 +76,6 @@ class UserModel {
       'first_name': firstName,
       'last_name': lastName,
       'profile_picture': profilePicture,
-      'address': address,
       'date_of_birth': dateOfBirth != null
           ? Timestamp.fromDate(dateOfBirth!)
           : null,
@@ -99,7 +95,6 @@ class UserModel {
     String? firstName,
     String? lastName,
     String? profilePicture,
-    String? address,
     DateTime? dateOfBirth,
     String? gender,
     bool? isActive,
@@ -114,7 +109,6 @@ class UserModel {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       profilePicture: profilePicture ?? this.profilePicture,
-      address: address ?? this.address,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       isActive: isActive ?? this.isActive,

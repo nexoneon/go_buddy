@@ -25,7 +25,6 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _addressController = TextEditingController();
   final _dobController = TextEditingController();
 
   final UserService _userService = UserService();
@@ -63,7 +62,6 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
         setState(() {
           _firstNameController.text = user.firstName ?? '';
           _lastNameController.text = user.lastName ?? '';
-          _addressController.text = user.address ?? '';
           _existingProfilePicture = user.profilePicture;
           if (user.dateOfBirth != null) {
             _selectedDate = user.dateOfBirth;
@@ -87,7 +85,6 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _addressController.dispose();
     _dobController.dispose();
     super.dispose();
   }
@@ -305,7 +302,6 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
           profilePicture: profilePictureUrl,
-          address: _addressController.text.trim(),
           dateOfBirth: _selectedDate,
           gender: _selectedGender,
         );
@@ -679,27 +675,6 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please select your date of birth';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Address
-            TextFormField(
-              controller: _addressController,
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.done,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Address',
-                hintText: 'Enter your address',
-                prefixIcon: Icon(Icons.location_on_outlined, size: 22),
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your address';
                 }
                 return null;
               },

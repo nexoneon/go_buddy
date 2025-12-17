@@ -129,11 +129,6 @@ class _UsersTabState extends State<UsersTab> {
     // Full name
     final fullName = user.fullName.isEmpty ? 'No Name' : user.fullName;
 
-    // Address
-    final address = user.address?.isNotEmpty == true
-        ? user.address!
-        : 'No address provided';
-
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -231,37 +226,7 @@ class _UsersTabState extends State<UsersTab> {
               ],
             ),
             const SizedBox(height: 12),
-            // Address row
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.location_on, size: 18, color: Colors.red[400]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      address,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: address == 'No address provided'
-                            ? Colors.grey[500]
-                            : Colors.grey[800],
-                        fontStyle: address == 'No address provided'
-                            ? FontStyle.italic
-                            : FontStyle.normal,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Address section removed - addresses are now in separate collection
             const SizedBox(height: 12),
             // Bottom row: Status and joined date
             Row(
@@ -437,11 +402,6 @@ class _UsersTabState extends State<UsersTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDetailRow(Icons.phone, 'Phone', user.phoneNumber),
-              _buildDetailRow(
-                Icons.location_on,
-                'Address',
-                user.address ?? 'No address',
-              ),
               _buildDetailRow(
                 Icons.person,
                 'Gender',

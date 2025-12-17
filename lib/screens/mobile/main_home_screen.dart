@@ -783,81 +783,244 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: StreamBuilder<List<ServiceModel>>(
         stream: _serviceService.getServices(),
-        builder: (context, serviceSnapshot) {
-          // We don't block the UI if services are loading, we just show 0 count
-          final services = serviceSnapshot.data ?? [];
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error loading services'));
+          }
 
-          return StreamBuilder<List<CategoryModel>>(
-            stream: _categoryService.getCategories(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error loading categories'));
-              }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          final allServices = snapshot.data ?? [];
 
-              final allCategories = snapshot.data ?? [];
+          // Filter services based on search
+          final services = _searchQuery.isEmpty
+              ? allServices
+              : allServices
+                    .where((s) => s.name.toLowerCase().contains(_searchQuery))
+                    .toList();
 
-              // Filter categories based on search
-              final categories = _searchQuery.isEmpty
-                  ? allCategories
-                  : allCategories
-                        .where(
-                          (c) => c.name.toLowerCase().contains(_searchQuery),
-                        )
-                        .toList();
-
-              if (categories.isEmpty && _searchQuery.isNotEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 48,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No categories found for "$_searchQuery"',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                      ],
+          if (services.isEmpty && _searchQuery.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  children: [
+                    Icon(Icons.search_off, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No services found for "$_searchQuery"',
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
-                  ),
-                );
-              }
-
-              if (categories.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text('No categories available'),
-                  ),
-                );
-              }
-
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 0.58, // Taller cards for larger images
+                  ],
                 ),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  final category = categories[index];
-                  return _buildCategoryCard(category, 0);
-                },
-              );
+              ),
+            );
+          }
+
+          if (services.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('No services available'),
+              ),
+            );
+          }
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: services.length,
+            itemBuilder: (context, index) {
+              final service = services[index];
+              return _buildServiceGridCard(service);
             },
           );
         },
+      ),
+    );
+  }
+
+  /// Build service card for grid display with rating
+  Widget _buildServiceGridCard(ServiceModel service) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ServiceDetailScreen(service: service),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Service Image
+            Expanded(
+              flex: 3,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withAlpha(26),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                ),
+                child: service.imageUrl != null && service.imageUrl!.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        child: Image.network(
+                          service.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Icon(
+                              Icons.build_outlined,
+                              size: 40,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.build_outlined,
+                          size: 40,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+              ),
+            ),
+            // Service Details
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Service Name
+                    Text(
+                      service.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Price and Discount
+                    Row(
+                      children: [
+                        if (service.percentage != null &&
+                            service.percentage! > 0) ...[
+                          Text(
+                            '₹${(service.price * (1 - service.percentage! / 100)).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '₹${service.price.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        ] else ...[
+                          Text(
+                            '₹${service.price.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const Spacer(),
+                    // Rating
+                    Row(
+                      children: [
+                        if (service.rating > 0) ...[
+                          Icon(Icons.star, color: Colors.amber, size: 14),
+                          const SizedBox(width: 2),
+                          Text(
+                            service.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            ' (${service.ratingCount})',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ] else ...[
+                          Icon(
+                            Icons.star_border,
+                            color: Colors.grey[400],
+                            size: 14,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'No ratings',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        if (service.percentage != null &&
+                            service.percentage! > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withAlpha(26),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${service.percentage!.toStringAsFixed(0)}%',
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -165,260 +165,296 @@ class _OrdersTabState extends State<OrdersTab> {
                 ? orderDoc.id.substring(0, 8).toUpperCase()
                 : orderDoc.id.toUpperCase();
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top row: Order ID, service name, status
-                    Row(
+            // Fetch user details
+            final userId = order['user_id'] as String?;
+
+            return FutureBuilder<DocumentSnapshot>(
+              future: userId != null && userId.isNotEmpty
+                  ? FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .get()
+                  : null,
+              builder: (context, userSnapshot) {
+                // Get user name from the fetched user document
+                String userName = 'Unknown';
+                if (userSnapshot.hasData && userSnapshot.data!.exists) {
+                  final userData =
+                      userSnapshot.data!.data() as Map<String, dynamic>?;
+                  if (userData != null) {
+                    final firstName = userData['first_name'] ?? '';
+                    final lastName = userData['last_name'] ?? '';
+                    final fullName = '$firstName $lastName'.trim();
+                    userName = fullName.isNotEmpty ? fullName : 'Unknown';
+                  }
+                }
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '#$orderId',
-                            style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                order['service_name'] ?? 'Unknown Service',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                        // Top row: Order ID, service name, status
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '₹${order['amount']?.toStringAsFixed(0) ?? '0'}',
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '#$orderId',
                                 style: TextStyle(
                                   color: AppTheme.primaryColor,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        // Status dropdown
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(
-                              currentStatus,
-                            ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _getStatusColor(currentStatus),
                             ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<OrderStatus>(
-                              value: currentStatus,
-                              isDense: true,
-                              icon: Icon(
-                                Icons.arrow_drop_down,
-                                color: _getStatusColor(currentStatus),
-                                size: 20,
-                              ),
-                              items: OrderStatus.values.map((status) {
-                                return DropdownMenuItem(
-                                  value: status,
-                                  child: Text(
-                                    status.displayName,
-                                    style: TextStyle(
-                                      color: _getStatusColor(status),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (newStatus) async {
-                                if (newStatus != null &&
-                                    newStatus != currentStatus) {
-                                  await FirebaseFirestore.instance
-                                      .collection('orders')
-                                      .doc(orderDoc.id)
-                                      .update({'status': newStatus.value});
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Status updated to ${newStatus.displayName}',
-                                        ),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                    const SizedBox(height: 12),
-                    // Customer info row
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        _buildOrderInfoChip(
-                          Icons.person,
-                          order['user_name'] ?? 'Unknown',
-                          Colors.blue,
-                        ),
-                        _buildOrderInfoChip(
-                          Icons.phone,
-                          order['user_phone'] ?? 'No phone',
-                          Colors.green,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Address row
-                    _buildOrderInfoChip(Icons.location_on, address, Colors.red),
-                    const SizedBox(height: 8),
-                    // Schedule and Created time row
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        _buildOrderInfoChip(
-                          Icons.event,
-                          'Schedule: $scheduleDateStr',
-                          Colors.purple,
-                        ),
-                        _buildOrderInfoChip(
-                          Icons.schedule,
-                          'Time: $bookingTime',
-                          Colors.orange,
-                        ),
-                        _buildOrderInfoChip(
-                          Icons.access_time,
-                          'Ordered: $createdDateStr',
-                          Colors.grey,
-                        ),
-                      ],
-                    ),
-                    // Rating (only show if order is completed and has rating)
-                    if (currentStatus == OrderStatus.completed &&
-                        rating > 0) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              size: 16,
-                              color: Colors.amber,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Rating: ${rating.toStringAsFixed(1)}/5',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.amber,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    // Customer Instructions (if any)
-                    if (order['customer_instructions'] != null &&
-                        (order['customer_instructions'] as String)
-                            .isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.blue.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.message_outlined,
-                              size: 16,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Customer Instructions:',
-                                    style: TextStyle(
-                                      fontSize: 11,
+                                  Text(
+                                    order['service_name'] ?? 'Unknown Service',
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
+                                      fontSize: 16,
                                     ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    order['customer_instructions'] as String,
+                                    '₹${order['amount']?.toStringAsFixed(0) ?? '0'}',
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[800],
-                                      fontStyle: FontStyle.italic,
+                                      color: AppTheme.primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+                            // Status dropdown
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(
+                                  currentStatus,
+                                ).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _getStatusColor(currentStatus),
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<OrderStatus>(
+                                  value: currentStatus,
+                                  isDense: true,
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: _getStatusColor(currentStatus),
+                                    size: 20,
+                                  ),
+                                  items: OrderStatus.values.map((status) {
+                                    return DropdownMenuItem(
+                                      value: status,
+                                      child: Text(
+                                        status.displayName,
+                                        style: TextStyle(
+                                          color: _getStatusColor(status),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (newStatus) async {
+                                    if (newStatus != null &&
+                                        newStatus != currentStatus) {
+                                      await FirebaseFirestore.instance
+                                          .collection('orders')
+                                          .doc(orderDoc.id)
+                                          .update({'status': newStatus.value});
+
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Status updated to ${newStatus.displayName}',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                        const SizedBox(height: 12),
+                        const Divider(height: 1),
+                        const SizedBox(height: 12),
+                        // Customer info row
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            _buildOrderInfoChip(
+                              Icons.person,
+                              userName,
+                              Colors.blue,
+                            ),
+                            _buildOrderInfoChip(
+                              Icons.phone,
+                              order['user_phone'] ?? 'No phone',
+                              Colors.green,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Address row
+                        _buildOrderInfoChip(
+                          Icons.location_on,
+                          address,
+                          Colors.red,
+                        ),
+                        const SizedBox(height: 8),
+                        // Schedule and Created time row
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            _buildOrderInfoChip(
+                              Icons.event,
+                              'Schedule: $scheduleDateStr',
+                              Colors.purple,
+                            ),
+                            _buildOrderInfoChip(
+                              Icons.schedule,
+                              'Time: $bookingTime',
+                              Colors.orange,
+                            ),
+                            _buildOrderInfoChip(
+                              Icons.access_time,
+                              'Ordered: $createdDateStr',
+                              Colors.grey,
+                            ),
+                          ],
+                        ),
+                        // Rating (only show if order is completed and has rating)
+                        if (currentStatus == OrderStatus.completed &&
+                            rating > 0) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: Colors.amber,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Rating: ${rating.toStringAsFixed(1)}/5',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.amber,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        // Customer Instructions (if any)
+                        if (order['customer_instructions'] != null &&
+                            (order['customer_instructions'] as String)
+                                .isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.blue.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.message_outlined,
+                                  size: 16,
+                                  color: Colors.blue,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Customer Instructions:',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        order['customer_instructions']
+                                            as String,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[800],
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         );

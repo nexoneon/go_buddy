@@ -137,13 +137,35 @@ class _ServiceListingScreenState extends State<ServiceListingScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withAlpha(26),
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
               ),
-              child: Icon(
-                Icons.build_outlined,
-                color: AppTheme.primaryColor,
-                size: 40,
-              ),
+              child: service.imageUrl != null && service.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      service.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.build_outlined,
+                        color: AppTheme.primaryColor,
+                        size: 40,
+                      ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                            strokeWidth: 2,
+                          ),
+                        );
+                      },
+                    )
+                  : Icon(
+                      Icons.build_outlined,
+                      color: AppTheme.primaryColor,
+                      size: 40,
+                    ),
             ),
             Expanded(
               child: Padding(

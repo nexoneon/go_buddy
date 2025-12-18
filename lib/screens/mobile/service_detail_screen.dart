@@ -296,15 +296,30 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 Container(
                                   width: 56,
                                   height: 56,
+                                  clipBehavior: Clip.antiAlias,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha(50),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Icon(
-                                    Icons.build_outlined,
-                                    color: Colors.white,
-                                    size: 28,
-                                  ),
+                                  child:
+                                      widget.service.imageUrl != null &&
+                                          widget.service.imageUrl!.isNotEmpty
+                                      ? Image.network(
+                                          widget.service.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Icon(
+                                                    Icons.build_outlined,
+                                                    color: Colors.white,
+                                                    size: 28,
+                                                  ),
+                                        )
+                                      : const Icon(
+                                          Icons.build_outlined,
+                                          color: Colors.white,
+                                          size: 28,
+                                        ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
@@ -1110,6 +1125,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             child: CustomScrollView(
               slivers: [
                 SliverAppBar(
+                  expandedHeight: 250,
                   pinned: true,
                   elevation: 0,
                   backgroundColor: const Color(0xFF0D7377),
@@ -1121,13 +1137,38 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       color: Colors.white,
                     ),
                   ),
-                  flexibleSpace: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF0D7377), Color(0xFF14919B)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (service.imageUrl != null &&
+                            service.imageUrl!.isNotEmpty)
+                          Image.network(service.imageUrl!, fit: BoxFit.cover)
+                        else
+                          Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF0D7377), Color(0xFF14919B)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                        // Gradient Overlay for visibility
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: 0.4),
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.6),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

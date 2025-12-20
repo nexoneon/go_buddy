@@ -350,13 +350,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      service.note ?? '',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
                       '₹${service.price.toStringAsFixed(0)}',
                       style: TextStyle(
                         color: AppTheme.primaryColor,
@@ -1008,39 +1001,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                           ),
                         if (_userService.currentUser != null)
                           const SizedBox(width: 8),
-                        // Rating
-                        if (service.rating > 0) ...[
-                          Icon(Icons.star, color: Colors.amber, size: 14),
-                          const SizedBox(width: 2),
-                          Text(
-                            service.rating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            ' (${service.ratingCount})',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ] else ...[
-                          Icon(
-                            Icons.star_border,
-                            color: Colors.grey[400],
-                            size: 14,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            'No ratings',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
                         const Spacer(),
                         if (service.percentage != null &&
                             service.percentage! > 0)

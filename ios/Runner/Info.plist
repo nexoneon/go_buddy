@@ -51,6 +51,18 @@
 	<string>This app requires access to the camera to take profile pictures.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app requires access to the microphone for video recording.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.665057026086-oe92m05jrnv16eddg2lsl29ojf5qjmge</string>
+				<string>app-1-665057026086-ios-c720119e0a5fb630afc6e7</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Required for connectivity_plus on iOS -->
 	<key>NSBonjourServices</key>
 	<array>

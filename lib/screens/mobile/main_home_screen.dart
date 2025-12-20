@@ -909,7 +909,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -923,43 +923,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    // Price and Discount
-                    Row(
-                      children: [
-                        if (service.percentage != null &&
-                            service.percentage! > 0) ...[
-                          Text(
-                            '₹${(service.price * (1 - service.percentage! / 100)).toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '₹${service.price.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[500],
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                        ] else ...[
-                          Text(
-                            '₹${service.price.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const Spacer(),
-                    // Rating and Favorites Row
+                    const SizedBox(height: 6),
+                    // Favorites, Price and Percentage Row (ALL LEFT ALIGNED)
                     Row(
                       children: [
                         // Favorites icon
@@ -1010,9 +975,29 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                           ),
                         if (_userService.currentUser != null)
                           const SizedBox(width: 8),
-                        const Spacer(),
+                        // Prices and Discount
                         if (service.percentage != null &&
-                            service.percentage! > 0)
+                            service.percentage! > 0) ...[
+                          Text(
+                            '₹${(service.price * (1 - service.percentage! / 100)).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          // Original Price with strikethrough
+                          Text(
+                            '₹${service.price.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Discount Percentage Badge
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 4,
@@ -1023,7 +1008,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '${service.percentage!.toStringAsFixed(0)}%',
+                              '${service.percentage!.toStringAsFixed(0)}% OFF',
                               style: const TextStyle(
                                 color: Colors.green,
                                 fontSize: 10,
@@ -1031,6 +1016,17 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                               ),
                             ),
                           ),
+                        ] else ...[
+                          // Regular Price (no discount)
+                          Text(
+                            '₹${service.price.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

@@ -837,7 +837,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.75,
+              childAspectRatio: 0.9,
             ),
             itemCount: services.length,
             itemBuilder: (context, index) {
@@ -870,7 +870,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           children: [
             // Service Image
             Expanded(
-              flex: 3,
+              flex: 5,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -907,7 +907,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             // Service Details
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Column(

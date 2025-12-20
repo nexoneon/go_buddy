@@ -6,6 +6,7 @@ import '../../services/order_service.dart';
 import '../../services/user_service.dart';
 import '../../services/address_service.dart';
 import '../../services/connectivity_service.dart';
+import '../../services/favourite_service.dart';
 import '../../models/address_model.dart';
 import '../../config/config.dart';
 import 'profile_screen.dart';
@@ -26,6 +27,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final UserService _userService = UserService();
   final AddressService _addressService = AddressService();
   final ConnectivityService _connectivityService = ConnectivityService();
+  final FavouriteService _favouriteService = FavouriteService();
 
   bool _wasConnected = true;
   bool _isOffline = false;
@@ -1137,6 +1139,52 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       color: Colors.white,
                     ),
                   ),
+                  actions: [
+                    StreamBuilder<bool>(
+                      stream: _userService.currentUser != null
+                          ? _favouriteService.isFavouriteStream(
+                              _userService.currentUser!.uid,
+                              widget.service.id,
+                            )
+                          : Stream.value(false),
+                      builder: (context, snapshot) {
+                        final isFavorite = snapshot.data ?? false;
+                        final user = _userService.currentUser;
+
+                        return IconButton(
+                          icon: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red : Colors.white,
+                          ),
+                          onPressed: user != null
+                              ? () async {
+                                  final added = await _favouriteService
+                                      .toggleFavourite(
+                                        user.uid,
+                                        widget.service,
+                                      );
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          added
+                                              ? 'Added to favourites'
+                                              : 'Removed from favourites',
+                                        ),
+                                        backgroundColor: added
+                                            ? Colors.green
+                                            : Colors.orange,
+                                        duration: const Duration(seconds: 1),
+                                      ),
+                                    );
+                                  }
+                                }
+                              : null,
+                        );
+                      },
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     background: Stack(
                       fit: StackFit.expand,

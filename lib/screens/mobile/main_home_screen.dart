@@ -957,9 +957,58 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                       ],
                     ),
                     const Spacer(),
-                    // Rating
+                    // Rating and Favorites Row
                     Row(
                       children: [
+                        // Favorites icon
+                        if (_userService.currentUser != null)
+                          StreamBuilder<bool>(
+                            stream: _favouriteService.isFavouriteStream(
+                              _userService.currentUser!.uid,
+                              service.id,
+                            ),
+                            builder: (context, snapshot) {
+                              final isFavourite = snapshot.data ?? false;
+                              return GestureDetector(
+                                onTap: () async {
+                                  final user = _userService.currentUser;
+                                  if (user != null) {
+                                    final added = await _favouriteService
+                                        .toggleFavourite(user.uid, service);
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            added
+                                                ? 'Added to favourites'
+                                                : 'Removed from favourites',
+                                          ),
+                                          backgroundColor: added
+                                              ? Colors.green
+                                              : Colors.orange,
+                                          duration: const Duration(seconds: 1),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                child: Icon(
+                                  isFavourite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavourite
+                                      ? Colors.red
+                                      : Colors.grey[400],
+                                  size: 18,
+                                ),
+                              );
+                            },
+                          ),
+                        if (_userService.currentUser != null)
+                          const SizedBox(width: 8),
+                        // Rating
                         if (service.rating > 0) ...[
                           Icon(Icons.star, color: Colors.amber, size: 14),
                           const SizedBox(width: 2),

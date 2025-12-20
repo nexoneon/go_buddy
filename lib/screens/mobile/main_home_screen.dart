@@ -289,7 +289,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         }
 
         return ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           padding: const EdgeInsets.all(16),
           itemCount: favourites.length,
           itemBuilder: (context, index) {
@@ -390,7 +392,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   Widget _buildSettingsPage() {
     final user = _userService.currentUser;
     return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
@@ -622,7 +626,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
   Widget _buildBody() {
     return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       child: Column(
         children: [
           const SizedBox(height: 12),

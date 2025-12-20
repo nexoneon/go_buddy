@@ -89,7 +89,9 @@ class _HelpScreenState extends State<HelpScreen>
         }
 
         return ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           padding: const EdgeInsets.all(16),
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -206,7 +208,9 @@ class _HelpScreenState extends State<HelpScreen>
         }
 
         return ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           padding: const EdgeInsets.all(16),
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -331,7 +335,9 @@ class _HelpScreenState extends State<HelpScreen>
             .toList();
 
         return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

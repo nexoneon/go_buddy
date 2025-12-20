@@ -256,6 +256,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
               child: Padding(
                 padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom + 20,

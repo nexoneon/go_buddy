@@ -284,6 +284,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         ),
         child: SafeArea(
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             padding: MobileTheme.pagePadding,
             child: FadeTransition(
               opacity: _fadeAnimation,

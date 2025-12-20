@@ -102,7 +102,9 @@ class _ServiceListingScreenState extends State<ServiceListingScreen> {
           }
 
           return ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             padding: const EdgeInsets.all(16),
             itemCount: services.length,
             itemBuilder: (context, index) {

@@ -182,7 +182,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     }
 
     return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: const EdgeInsets.all(16),
       itemCount: orders.length,
       itemBuilder: (context, index) {

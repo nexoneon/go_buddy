@@ -82,6 +82,9 @@ class _RaiseRequestScreenState extends State<RaiseRequestScreen> {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,

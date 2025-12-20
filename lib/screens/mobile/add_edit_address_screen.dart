@@ -94,6 +94,9 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,

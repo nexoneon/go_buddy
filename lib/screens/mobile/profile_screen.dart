@@ -412,6 +412,9 @@ class _MobileProfileScreenState extends State<MobileProfileScreen> {
               )
             : SafeArea(
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
                   padding: const EdgeInsets.all(16),
                   child: Form(
                     key: _formKey,

@@ -82,6 +82,9 @@ class AddressListScreen extends StatelessWidget {
           }
 
           return ListView.builder(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             padding: const EdgeInsets.all(16),
             itemCount: addresses.length,
             itemBuilder: (context, index) {

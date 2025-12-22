@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '665057026086',
     projectId: 'payservices-7827a',
     storageBucket: 'payservices-7827a.firebasestorage.app',
-    iosBundleId: 'com.example.goBuddy',
+    iosBundleId: 'app.7payservice.goBuddy',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '665057026086',
     projectId: 'payservices-7827a',
     storageBucket: 'payservices-7827a.firebasestorage.app',
-    iosBundleId: 'com.example.goBuddy',
+    iosBundleId: 'app.7payservice.goBuddy',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -85,5 +85,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'payservices-7827a.firebasestorage.app',
     measurementId: 'G-JNNYKLM65G',
   );
-
 }

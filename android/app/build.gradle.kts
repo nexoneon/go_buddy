@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.go_buddy"
+    namespace = "app.7payservice.go_buddy"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.go_buddy"
+        applicationId = "app.7payservice.go_buddy"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode

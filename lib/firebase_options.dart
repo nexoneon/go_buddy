@@ -52,10 +52,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAqGoqjBWGSDwbvfGtr9jV2ELGJgZ9l9mU',
-    appId: '1:665057026086:android:de3cb0052a416d5aafc6e7',
+    appId: '1:665057026086:android:e12e3566e1ebf309afc6e7',
     messagingSenderId: '665057026086',
     projectId: 'payservices-7827a',
     storageBucket: 'payservices-7827a.firebasestorage.app',
+    androidClientId:
+        '665057026086-bcv6ri93i77ltu230eh3s29e08plag5o.apps.googleusercontent.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '665057026086',
     projectId: 'payservices-7827a',
     storageBucket: 'payservices-7827a.firebasestorage.app',
-    iosBundleId: 'app.7payservice.goBuddy',
+    iosBundleId: 'app.sevenpayservice.gobuddy',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '665057026086',
     projectId: 'payservices-7827a',
     storageBucket: 'payservices-7827a.firebasestorage.app',
-    iosBundleId: 'app.7payservice.goBuddy',
+    iosBundleId: 'app.sevenpayservice.gobuddy',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

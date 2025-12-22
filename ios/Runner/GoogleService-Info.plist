@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>665057026086-2gsi774imu09ikolgd0imqm0i5e6c7q8.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.665057026086-2gsi774imu09ikolgd0imqm0i5e6c7q8</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>665057026086-7b294517rtm7l2oba31be0kj5b8b87ri.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCaUbJIaAyCS5JvaQxLU1-YD3dnRz5dOqM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>665057026086</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>app.sevenpayservice.gobuddy</string>
+	<key>PROJECT_ID</key>
+	<string>payservices-7827a</string>
+	<key>STORAGE_BUCKET</key>
+	<string>payservices-7827a.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:665057026086:ios:d9573a4bf6a2b28aafc6e7</string>
+</dict>
+</plist>

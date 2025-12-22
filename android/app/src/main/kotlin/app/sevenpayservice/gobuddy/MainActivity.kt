@@ -1,4 +1,4 @@
-package app.7payservice.go_buddy
+package app.sevenpayservice.gobuddy
 
 import io.flutter.embedding.android.FlutterActivity
 

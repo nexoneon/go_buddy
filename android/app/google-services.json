@@ -7,20 +7,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:665057026086:android:de3cb0052a416d5aafc6e7",
+        "mobilesdk_app_id": "1:665057026086:android:217b35020e8184b9afc6e7",
         "android_client_info": {
-          "package_name": "app.7payservice.go_buddy"
+          "package_name": "app.sevenpayservice.gobuddy"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "665057026086-7b294517rtm7l2oba31be0kj5b8b87ri.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "app.7payservice.go_buddy",
-            "certificate_hash": "f4cd5d4f21c182866df50ca3d833d3b2fccd7c56"
-          }
-        },
         {
           "client_id": "665057026086-li74rd9i5ujadgk8m5tktrv2kiljsf9a.apps.googleusercontent.com",
           "client_type": 3
@@ -42,7 +34,7 @@
               "client_id": "665057026086-oe92m05jrnv16eddg2lsl29ojf5qjmge.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "app.7payservice.goBuddy"
+                "bundle_id": "app.sevenpayservice.gobuddy"
               }
             }
           ]

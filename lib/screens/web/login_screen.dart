@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/config.dart';
 import '../../services/auth_service.dart';
 import '../../services/admin_service.dart';
 import '../../models/admin_model.dart';
 import 'web_admin_dashboard.dart';
 import 'web_admin_signup.dart';
-import 'web_privacy_policy.dart';
-import 'web_terms_of_service.dart';
 
 /// Web Admin Login Screen
 ///
@@ -555,12 +554,10 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                   children: [
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const WebPrivacyPolicyScreen(),
-                          ),
+                        final uri = Uri.parse(
+                          'https://payservices-7827a.web.app/privacy-policy.html',
                         );
+                        launchUrl(uri, mode: LaunchMode.externalApplication);
                       },
                       child: Text(
                         'Privacy Policy',
@@ -574,15 +571,13 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                     Text(' | ', style: TextStyle(color: Colors.grey[400])),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const WebTermsOfServiceScreen(),
-                          ),
+                        final uri = Uri.parse(
+                          'https://payservices-7827a.web.app/terms-and-conditions.html',
                         );
+                        launchUrl(uri, mode: LaunchMode.externalApplication);
                       },
                       child: Text(
-                        'Terms of Service',
+                        'Terms & Conditions',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 13,

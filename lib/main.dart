@@ -35,7 +35,21 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      home: _getHomeScreen(),
+      initialRoute: '/',
+      onGenerateRoute: (settings) {
+        // Handle web routing
+        if (kIsWeb) {
+          // Check if route is /admin.html or /admin
+          if (settings.name == '/admin.html' || settings.name == '/admin') {
+            return MaterialPageRoute(
+              builder: (context) => const _WebScreenSizeWrapper(),
+            );
+          }
+        }
+
+        // Default route
+        return MaterialPageRoute(builder: (context) => _getHomeScreen());
+      },
     );
   }
 

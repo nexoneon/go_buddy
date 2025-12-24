@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/config.dart';
 
 /// Web Privacy Policy Screen
@@ -235,6 +236,57 @@ We will respond to your inquiries within a reasonable timeframe.
                       Text(
                         '© 2024 7 Pay Services. All rights reserved.',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 24),
+                      // External Links
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              // Open privacy policy HTML
+                              final uri = Uri.parse(
+                                'https://payservices-7827a.web.app/privacy-policy.html',
+                              );
+                              launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            },
+                            icon: const Icon(Icons.privacy_tip),
+                            label: const Text('View Privacy Policy'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0D7377),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              // Open terms and conditions HTML
+                              final uri = Uri.parse(
+                                'https://payservices-7827a.web.app/terms-and-conditions.html',
+                              );
+                              launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            },
+                            icon: const Icon(Icons.description),
+                            label: const Text('View Terms & Conditions'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF14A085),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(

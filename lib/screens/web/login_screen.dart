@@ -555,7 +555,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                     TextButton(
                       onPressed: () {
                         final uri = Uri.parse(
-                          'https://payservices-7827a.web.app/privacy-policy.html',
+                          'https://sevenpayservices.com/privacy-policy-2',
                         );
                         launchUrl(uri, mode: LaunchMode.externalApplication);
                       },
@@ -572,7 +572,7 @@ class _WebLoginScreenState extends State<WebLoginScreen>
                     TextButton(
                       onPressed: () {
                         final uri = Uri.parse(
-                          'https://payservices-7827a.web.app/terms-and-conditions.html',
+                          'https://sevenpayservices.com/terms-and-conditions',
                         );
                         launchUrl(uri, mode: LaunchMode.externalApplication);
                       },

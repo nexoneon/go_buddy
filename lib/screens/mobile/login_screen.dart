@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/config.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
@@ -646,29 +647,52 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   Widget _buildTermsText() {
-    return Text.rich(
-      TextSpan(
-        text: 'By continuing, you agree to our ',
-        style: MobileTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
-        children: [
-          TextSpan(
-            text: 'Terms of Service',
-            style: TextStyle(
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          'By continuing, you agree to our ',
+          style: MobileTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+        InkWell(
+          onTap: () {
+            final uri = Uri.parse(
+              'https://sevenpayservices.com/terms-and-conditions/',
+            );
+            launchUrl(uri, mode: LaunchMode.externalApplication);
+          },
+          child: Text(
+            'Terms of Service',
+            style: MobileTheme.bodySmall.copyWith(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.w600,
+              decoration: TextDecoration.underline,
             ),
           ),
-          const TextSpan(text: ' and '),
-          TextSpan(
-            text: 'Privacy Policy',
-            style: TextStyle(
+        ),
+        Text(
+          ' and ',
+          style: MobileTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+        ),
+        InkWell(
+          onTap: () {
+            final uri = Uri.parse(
+              'https://sevenpayservices.com/privacy-policy-2/',
+            );
+            launchUrl(uri, mode: LaunchMode.externalApplication);
+          },
+          child: Text(
+            'Privacy Policy',
+            style: MobileTheme.bodySmall.copyWith(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.w600,
+              decoration: TextDecoration.underline,
             ),
           ),
-        ],
-      ),
-      textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "665057026086-bith4rpmrl4d33rn00frgs2e3ibs7do4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.sevenpayservice.gobuddy",
+            "certificate_hash": "693d1eed9b95c14c5d5b3004605a7ca929354565"
+          }
+        },
+        {
           "client_id": "665057026086-li74rd9i5ujadgk8m5tktrv2kiljsf9a.apps.googleusercontent.com",
           "client_type": 3
         }

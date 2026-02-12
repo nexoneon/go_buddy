@@ -255,725 +255,762 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                ),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header with service info
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF0D7377), Color(0xFF14919B)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(24),
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            // Handle bar
-                            Center(
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                margin: const EdgeInsets.only(bottom: 16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha(100),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Scrollable Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header with service info
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF0D7377), Color(0xFF14919B)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(24),
                               ),
                             ),
-                            Row(
+                            child: Column(
                               children: [
-                                Container(
-                                  width: 56,
-                                  height: 56,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(14),
+                                // Handle bar
+                                Center(
+                                  child: Container(
+                                    width: 40,
+                                    height: 4,
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withAlpha(100),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
                                   ),
-                                  child:
-                                      widget.service.imageUrl != null &&
-                                          widget.service.imageUrl!.isNotEmpty
-                                      ? Image.network(
-                                          widget.service.imageUrl!,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  const Icon(
-                                                    Icons.build_outlined,
-                                                    color: Colors.white,
-                                                    size: 28,
-                                                  ),
-                                        )
-                                      : const Icon(
-                                          Icons.build_outlined,
-                                          color: Colors.white,
-                                          size: 28,
-                                        ),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 56,
+                                      height: 56,
+                                      clipBehavior: Clip.antiAlias,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child:
+                                          widget.service.imageUrl != null &&
+                                          widget.service.imageUrl!.isNotEmpty
+                                          ? Image.network(
+                                            widget.service.imageUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    const Icon(
+                                                      Icons.build_outlined,
+                                                      color: Colors.white,
+                                                      size: 28,
+                                                    ),
+                                          )
+                                          : const Icon(
+                                            Icons.build_outlined,
+                                            color: Colors.white,
+                                            size: 28,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            widget.service.name,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '₹${widget.service.price.toStringAsFixed(0)}',
+                                            style: TextStyle(
+                                              color:
+                                                  Colors.white.withAlpha(230),
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Section title
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF0D7377,
+                                        ).withAlpha(26),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.location_on,
+                                        color: Color(0xFF0D7377),
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Booking Details',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Address field
+                                TextFormField(
+                                  controller: addressController,
+                                  readOnly: true, // Make it read-only
+                                  onTap: () async {
+                                    final result =
+                                        await Navigator.push<AddressModel>(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const AddressListScreen(
+                                                  isSelectionMode: true,
+                                                ),
+                                          ),
+                                        );
+
+                                    if (result != null) {
+                                      addressController.text =
+                                          result.fullAddress;
+                                      checkFormValidity(setDialogState);
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    labelText: 'Service Address',
+                                    hintText: 'Select address',
+                                    prefixIcon: const Icon(Icons.home_outlined),
+                                    suffixIcon:
+                                        const Icon(Icons.arrow_drop_down),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF0D7377),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[50],
+                                  ),
+                                  maxLines: 2,
+                                  validator: (v) => v?.isEmpty == true
+                                      ? 'Address is required'
+                                      : null,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Date and Time row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          final date = await showDatePicker(
+                                            context: context,
+                                            initialDate: DateTime.now(),
+                                            firstDate: DateTime.now(),
+                                            lastDate: DateTime.now().add(
+                                              const Duration(days: 30),
+                                            ),
+                                          );
+                                          if (date != null) {
+                                            setDialogState(() {
+                                              selectedDate = date;
+                                              dateController.text =
+                                                  '${date.day}/${date.month}/${date.year}';
+                                            });
+                                            checkFormValidity(setDialogState);
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[50],
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color:
+                                                  dateController.text.isNotEmpty
+                                                  ? const Color(0xFF0D7377)
+                                                  : Colors.grey[300]!,
+                                              width:
+                                                  dateController.text.isNotEmpty
+                                                  ? 2
+                                                  : 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_today,
+                                                color:
+                                                    dateController
+                                                            .text
+                                                            .isNotEmpty
+                                                    ? const Color(0xFF0D7377)
+                                                    : Colors.grey[600],
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Date',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 2),
+                                                    Text(
+                                                      dateController
+                                                              .text
+                                                              .isEmpty
+                                                          ? 'Select'
+                                                          : dateController.text,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            dateController
+                                                                    .text
+                                                                    .isEmpty
+                                                            ? Colors.grey[400]
+                                                            : Colors.black87,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              if (dateController
+                                                  .text
+                                                  .isNotEmpty)
+                                                const Icon(
+                                                  Icons.check_circle,
+                                                  color: Colors.green,
+                                                  size: 18,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          final time = await showTimePicker(
+                                            context: context,
+                                            initialTime: TimeOfDay.now(),
+                                          );
+                                          if (time != null) {
+                                            setDialogState(() {
+                                              timeController.text = time.format(
+                                                context,
+                                              );
+                                            });
+                                            checkFormValidity(setDialogState);
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[50],
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color:
+                                                  timeController.text.isNotEmpty
+                                                  ? const Color(0xFF0D7377)
+                                                  : Colors.grey[300]!,
+                                              width:
+                                                  timeController.text.isNotEmpty
+                                                  ? 2
+                                                  : 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.access_time,
+                                                color:
+                                                    timeController
+                                                            .text
+                                                            .isNotEmpty
+                                                    ? const Color(0xFF0D7377)
+                                                    : Colors.grey[600],
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Time',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 2),
+                                                    Text(
+                                                      timeController
+                                                              .text
+                                                              .isEmpty
+                                                          ? 'Select'
+                                                          : timeController.text,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            timeController
+                                                                    .text
+                                                                    .isEmpty
+                                                            ? Colors.grey[400]
+                                                            : Colors.black87,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              if (timeController
+                                                  .text
+                                                  .isNotEmpty)
+                                                const Icon(
+                                                  Icons.check_circle,
+                                                  color: Colors.green,
+                                                  size: 18,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Customer Instructions (Optional)
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withAlpha(15),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.blue.withAlpha(50),
+                                    ),
+                                  ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        widget.service.name,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '₹${widget.service.price.toStringAsFixed(0)}',
-                                        style: TextStyle(
-                                          color: Colors.white.withAlpha(230),
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Section title
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF0D7377,
-                                    ).withAlpha(26),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.location_on,
-                                    color: Color(0xFF0D7377),
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Booking Details',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Address field
-                            TextFormField(
-                              controller: addressController,
-                              readOnly: true, // Make it read-only
-                              onTap: () async {
-                                final result =
-                                    await Navigator.push<AddressModel>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AddressListScreen(
-                                              isSelectionMode: true,
-                                            ),
-                                      ),
-                                    );
-
-                                if (result != null) {
-                                  addressController.text = result.fullAddress;
-                                  checkFormValidity(setDialogState);
-                                }
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'Service Address',
-                                hintText: 'Select address',
-                                prefixIcon: const Icon(Icons.home_outlined),
-                                suffixIcon: const Icon(Icons.arrow_drop_down),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey[300]!,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF0D7377),
-                                    width: 2,
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                              ),
-                              maxLines: 2,
-                              validator: (v) => v?.isEmpty == true
-                                  ? 'Address is required'
-                                  : null,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Date and Time row
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      final date = await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime.now(),
-                                        lastDate: DateTime.now().add(
-                                          const Duration(days: 30),
-                                        ),
-                                      );
-                                      if (date != null) {
-                                        setDialogState(() {
-                                          selectedDate = date;
-                                          dateController.text =
-                                              '${date.day}/${date.month}/${date.year}';
-                                        });
-                                        checkFormValidity(setDialogState);
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[50],
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: dateController.text.isNotEmpty
-                                              ? const Color(0xFF0D7377)
-                                              : Colors.grey[300]!,
-                                          width: dateController.text.isNotEmpty
-                                              ? 2
-                                              : 1,
-                                        ),
-                                      ),
-                                      child: Row(
+                                      Row(
                                         children: [
                                           Icon(
-                                            Icons.calendar_today,
-                                            color:
-                                                dateController.text.isNotEmpty
-                                                ? const Color(0xFF0D7377)
-                                                : Colors.grey[600],
+                                            Icons.message_outlined,
+                                            color: Colors.blue[700],
                                             size: 20,
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Date',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  dateController.text.isEmpty
-                                                      ? 'Select'
-                                                      : dateController.text,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    color:
-                                                        dateController
-                                                            .text
-                                                            .isEmpty
-                                                        ? Colors.grey[400]
-                                                        : Colors.black87,
-                                                  ),
-                                                ),
-                                              ],
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Special Instructions (Optional)',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue[700],
                                             ),
                                           ),
-                                          if (dateController.text.isNotEmpty)
-                                            const Icon(
-                                              Icons.check_circle,
-                                              color: Colors.green,
-                                              size: 18,
-                                            ),
                                         ],
                                       ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      final time = await showTimePicker(
-                                        context: context,
-                                        initialTime: TimeOfDay.now(),
-                                      );
-                                      if (time != null) {
-                                        setDialogState(() {
-                                          timeController.text = time.format(
-                                            context,
-                                          );
-                                        });
-                                        checkFormValidity(setDialogState);
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[50],
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: timeController.text.isNotEmpty
-                                              ? const Color(0xFF0D7377)
-                                              : Colors.grey[300]!,
-                                          width: timeController.text.isNotEmpty
-                                              ? 2
-                                              : 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.access_time,
-                                            color:
-                                                timeController.text.isNotEmpty
-                                                ? const Color(0xFF0D7377)
-                                                : Colors.grey[600],
-                                            size: 20,
+                                      const SizedBox(height: 12),
+                                      TextFormField(
+                                        controller: instructionsController,
+                                        maxLines: 3,
+                                        decoration: InputDecoration(
+                                          hintText:
+                                              'e.g., "Please bring a 2m ladder", "Pet in house, be careful"',
+                                          hintStyle: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey[500],
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Time',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  timeController.text.isEmpty
-                                                      ? 'Select'
-                                                      : timeController.text,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    color:
-                                                        timeController
-                                                            .text
-                                                            .isEmpty
-                                                        ? Colors.grey[400]
-                                                        : Colors.black87,
-                                                  ),
-                                                ),
-                                              ],
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[300]!,
                                             ),
                                           ),
-                                          if (timeController.text.isNotEmpty)
-                                            const Icon(
-                                              Icons.check_circle,
-                                              color: Colors.green,
-                                              size: 18,
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: BorderSide(
+                                              color: Colors.grey[300]!,
                                             ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Customer Instructions (Optional)
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withAlpha(15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.blue.withAlpha(50),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.message_outlined,
-                                        color: Colors.blue[700],
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Special Instructions (Optional)',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue[700],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: instructionsController,
-                                    maxLines: 3,
-                                    decoration: InputDecoration(
-                                      hintText:
-                                          'e.g., "Please bring a 2m ladder", "Pet in house, be careful"',
-                                      hintStyle: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey[500],
-                                      ),
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide(
-                                          color: Colors.grey[300]!,
-                                        ),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide(
-                                          color: Colors.grey[300]!,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: Color(0xFF0D7377),
-                                          width: 2,
-                                        ),
-                                      ),
-                                      contentPadding: const EdgeInsets.all(12),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Terms & Conditions section
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: termsAccepted
-                                    ? Colors.green.withAlpha(15)
-                                    : Colors.orange.withAlpha(15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: termsAccepted
-                                      ? Colors.green.withAlpha(50)
-                                      : Colors.orange.withAlpha(50),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.policy_outlined,
-                                        color: termsAccepted
-                                            ? Colors.green
-                                            : Colors.orange,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Terms & Conditions',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: termsAccepted
-                                              ? Colors.green[700]
-                                              : Colors.orange[700],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (widget.service.customerResponsibility !=
-                                          null &&
-                                      widget
-                                          .service
-                                          .customerResponsibility!
-                                          .isNotEmpty)
-                                    _buildTermItem(
-                                      'Customer Responsibility',
-                                      widget.service.customerResponsibility!,
-                                      Icons.person_outline,
-                                    ),
-                                  if (widget.service.note != null &&
-                                      widget.service.note!.isNotEmpty)
-                                    _buildTermItem(
-                                      'Important Note',
-                                      widget.service.note!,
-                                      Icons.info_outline,
-                                    ),
-                                  const SizedBox(height: 8),
-                                  // Checkbox
-                                  InkWell(
-                                    onTap: () {
-                                      setDialogState(() {
-                                        termsAccepted = !termsAccepted;
-                                      });
-                                      checkFormValidity(setDialogState);
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 24,
-                                          height: 24,
-                                          decoration: BoxDecoration(
-                                            color: termsAccepted
-                                                ? const Color(0xFF0D7377)
-                                                : Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                            border: Border.all(
-                                              color: termsAccepted
-                                                  ? const Color(0xFF0D7377)
-                                                  : Colors.grey[400]!,
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                              color: Color(0xFF0D7377),
                                               width: 2,
                                             ),
                                           ),
-                                          child: termsAccepted
-                                              ? const Icon(
-                                                  Icons.check,
-                                                  color: Colors.white,
-                                                  size: 16,
-                                                )
-                                              : null,
+                                          contentPadding:
+                                              const EdgeInsets.all(12),
                                         ),
-                                        const SizedBox(width: 12),
-                                        const Expanded(
-                                          child: Text(
-                                            'I accept the terms & conditions and service policies',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Terms & Conditions section
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        termsAccepted
+                                        ? Colors.green.withAlpha(15)
+                                        : Colors.orange.withAlpha(15),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color:
+                                          termsAccepted
+                                          ? Colors.green.withAlpha(50)
+                                          : Colors.orange.withAlpha(50),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Confirm Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: (isBooking || !isFormValid)
-                                    ? null
-                                    : () async {
-                                        if (formKey.currentState!.validate()) {
-                                          setDialogState(
-                                            () => isBooking = true,
-                                          );
-                                          try {
-                                            final user =
-                                                _authService.currentUser;
-
-                                            if (user == null) {
-                                              if (context.mounted) {
-                                                Navigator.pop(context);
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Please login to book',
-                                                    ),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              }
-                                              return;
-                                            }
-
-                                            final order = OrderModel(
-                                              id: '', // Auto-generated
-                                              userId: user.uid,
-                                              serviceId: widget.service.id,
-                                              serviceName: widget.service.name,
-                                              serviceImageUrl: '',
-                                              amount: widget.service.price,
-                                              status: 'pending',
-                                              bookingDate: selectedDate!,
-                                              bookingTime: timeController.text,
-                                              address: addressController.text,
-                                              userPhone: user.phoneNumber ?? '',
-                                              createdAt: DateTime.now(),
-                                              termsAccepted: termsAccepted,
-                                              customerInstructions:
-                                                  instructionsController
-                                                      .text
-                                                      .isNotEmpty
-                                                  ? instructionsController.text
-                                                  : null,
-                                            );
-
-                                            await _orderService.createOrder(
-                                              order,
-                                            );
-
-                                            if (context.mounted) {
-                                              Navigator.pop(
-                                                context,
-                                              ); // Close sheet
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Row(
-                                                    children: [
-                                                      const Icon(
-                                                        Icons.check_circle,
-                                                        color: Colors.white,
-                                                      ),
-                                                      const SizedBox(width: 12),
-                                                      const Text(
-                                                        'Order placed successfully!',
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  backgroundColor: Colors.green,
-                                                  behavior:
-                                                      SnackBarBehavior.floating,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          10,
-                                                        ),
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                          } catch (e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('Error: $e'),
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                              );
-                                            }
-                                          } finally {
-                                            if (context.mounted) {
-                                              setDialogState(
-                                                () => isBooking = false,
-                                              );
-                                            }
-                                          }
-                                        }
-                                      },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isFormValid
-                                      ? const Color(0xFF0D7377)
-                                      : Colors.grey[300],
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 18,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  elevation: isFormValid ? 2 : 0,
-                                ),
-                                child: isBooking
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
                                         children: [
                                           Icon(
-                                            isFormValid
-                                                ? Icons.check_circle
-                                                : Icons.pending,
-                                            color: Colors.white,
-                                            size: 22,
+                                            Icons.policy_outlined,
+                                            color:
+                                                termsAccepted
+                                                ? Colors.green
+                                                : Colors.orange,
+                                            size: 20,
                                           ),
-                                          const SizedBox(width: 10),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            isFormValid
-                                                ? 'Confirm Booking'
-                                                : termsAccepted
-                                                ? 'Fill all fields'
-                                                : 'Accept terms to continue',
-                                            style: const TextStyle(
-                                              fontSize: 16,
+                                            'Terms & Conditions',
+                                            style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                              color:
+                                                  termsAccepted
+                                                  ? Colors.green[700]
+                                                  : Colors.orange[700],
                                             ),
                                           ),
                                         ],
                                       ),
-                              ),
+                                      const SizedBox(height: 12),
+                                      if (widget.service.customerResponsibility !=
+                                              null &&
+                                          widget
+                                              .service
+                                              .customerResponsibility!
+                                              .isNotEmpty)
+                                        _buildTermItem(
+                                          'Customer Responsibility',
+                                          widget.service.customerResponsibility!,
+                                          Icons.person_outline,
+                                        ),
+                                      if (widget.service.note != null &&
+                                          widget.service.note!.isNotEmpty)
+                                        _buildTermItem(
+                                          'Important Note',
+                                          widget.service.note!,
+                                          Icons.info_outline,
+                                        ),
+                                      const SizedBox(height: 8),
+                                      // Checkbox
+                                      InkWell(
+                                        onTap: () {
+                                          setDialogState(() {
+                                            termsAccepted = !termsAccepted;
+                                          });
+                                          checkFormValidity(setDialogState);
+                                        },
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 24,
+                                              height: 24,
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    termsAccepted
+                                                    ? const Color(0xFF0D7377)
+                                                    : Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color:
+                                                      termsAccepted
+                                                      ? const Color(0xFF0D7377)
+                                                      : Colors.grey[400]!,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                              child:
+                                                  termsAccepted
+                                                  ? const Icon(
+                                                    Icons.check,
+                                                    color: Colors.white,
+                                                    size: 16,
+                                                  )
+                                                  : null,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Expanded(
+                                              child: Text(
+                                                'I accept the terms & conditions and service policies',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Sticky Footer with Confirm Button
+                Container(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 16,
+                    bottom:
+                        MediaQuery.of(context).viewInsets.bottom +
+                        MediaQuery.of(context).padding.bottom +
+                        20,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(20),
+                        blurRadius: 10,
+                        offset: const Offset(0, -5),
                       ),
                     ],
                   ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed:
+                          (isBooking || !isFormValid)
+                          ? null
+                          : () async {
+                            if (formKey.currentState!.validate()) {
+                              setDialogState(() => isBooking = true);
+                              try {
+                                final user = _authService.currentUser;
+
+                                if (user == null) {
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please login to book'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+
+                                final order = OrderModel(
+                                  id: '', // Auto-generated
+                                  userId: user.uid,
+                                  serviceId: widget.service.id,
+                                  serviceName: widget.service.name,
+                                  serviceImageUrl: '',
+                                  amount: widget.service.price,
+                                  status: 'pending',
+                                  bookingDate: selectedDate!,
+                                  bookingTime: timeController.text,
+                                  address: addressController.text,
+                                  userPhone: user.phoneNumber ?? '',
+                                  createdAt: DateTime.now(),
+                                  termsAccepted: termsAccepted,
+                                  customerInstructions:
+                                      instructionsController.text.isNotEmpty
+                                      ? instructionsController.text
+                                      : null,
+                                );
+
+                                await _orderService.createOrder(order);
+
+                                if (context.mounted) {
+                                  Navigator.pop(context); // Close sheet
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.check_circle,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text(
+                                            'Order placed successfully!',
+                                          ),
+                                        ],
+                                      ),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  setDialogState(() => isBooking = false);
+                                }
+                              }
+                            }
+                          },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isFormValid
+                            ? const Color(0xFF0D7377)
+                            : Colors.grey[300],
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: isFormValid ? 2 : 0,
+                      ),
+                      child:
+                          isBooking
+                          ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                          : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isFormValid
+                                    ? Icons.check_circle
+                                    : Icons.pending,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                isFormValid
+                                    ? 'Confirm Booking'
+                                    : termsAccepted
+                                    ? 'Fill all fields'
+                                    : 'Accept terms to continue',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           );
         },
       ),
     );
+
   }
 
   Widget _buildTermItem(String title, String content, IconData icon) {

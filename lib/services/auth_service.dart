@@ -26,6 +26,7 @@ class AuthService extends ChangeNotifier {
   String? get userName => _auth.currentUser?.displayName;
   String? get errorMessage => _errorMessage;
   String? get verificationId => _verificationId;
+  bool get isVerifying => _verificationId != null;
 
   /// Initialize the auth service
   Future<void> initialize() async {

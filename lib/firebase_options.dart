@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCaUbJIaAyCS5JvaQxLU1-YD3dnRz5dOqM',
-    appId: '1:665057026086:ios:c720119e0a5fb630afc6e7',
+    appId: '1:665057026086:ios:d9573a4bf6a2b28aafc6e7',
     messagingSenderId: '665057026086',
     projectId: 'payservices-7827a',
     storageBucket: 'payservices-7827a.firebasestorage.app',
@@ -71,7 +71,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCaUbJIaAyCS5JvaQxLU1-YD3dnRz5dOqM',
-    appId: '1:665057026086:ios:c720119e0a5fb630afc6e7',
+    appId: '1:665057026086:ios:d9573a4bf6a2b28aafc6e7',
     messagingSenderId: '665057026086',
     projectId: 'payservices-7827a',
     storageBucket: 'payservices-7827a.firebasestorage.app',

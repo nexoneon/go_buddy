@@ -35,31 +35,17 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      initialRoute: '/',
-      onGenerateRoute: (settings) {
-        // Handle web routing
-        if (kIsWeb) {
-          // Check if route is /admin.html or /admin
-          if (settings.name == '/admin.html' || settings.name == '/admin') {
-            return MaterialPageRoute(
-              builder: (context) => const _WebScreenSizeWrapper(),
-            );
-          }
-        }
-
-        // Default route
-        return MaterialPageRoute(builder: (context) => _getHomeScreen());
-      },
+      home: _getHomeScreen(),
     );
   }
 
   /// Returns the appropriate home screen based on the platform
   Widget _getHomeScreen() {
     if (kIsWeb) {
-      // Web platform: Check screen size and show appropriate screen
       return const _WebScreenSizeWrapper();
     } else {
-      // Mobile platform: Show MobileHomeScreen (Splash) → then navigates to LoginScreen
+      // For mobile, use the Splash Screen as the entry point
+      // It handles its own navigation logic to Login or Home
       return const ConnectivityWrapper(
         showBanner: true,
         child: MobileHomeScreen(),

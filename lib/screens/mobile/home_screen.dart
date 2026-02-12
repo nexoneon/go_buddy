@@ -21,6 +21,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
     with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  static bool _hasNavigated = false;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -57,10 +58,17 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
   }
 
   Future<void> _checkAuthAndNavigate() async {
+    if (_hasNavigated) {
+      debugPrint('🚀 [HomeScreen] Already navigated once, skipping splash logic');
+      return;
+    }
+
     // Wait for splash animation to complete (minimum 2 seconds)
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
+
+    _hasNavigated = true;
 
     // Check if user is logged in
     final currentUser = _authService.currentUser;

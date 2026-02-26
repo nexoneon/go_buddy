@@ -2,7 +2,7 @@ app_identifier("app.sevenpayservice.gobuddy") # The bundle identifier of your ap
 apple_id("jayaprakeshnarayana7@gmail.com") # Your Apple Developer Portal username
 
 itc_team_id("128545931") # App Store Connect Team ID
-team_id("666JBNV48T") # Developer Portal Team ID
+team_id("923L45P2D3") # Developer Portal Team ID
 
 # For more information about the Appfile, see:
 #     https://docs.fastlane.tools/advanced/#appfile

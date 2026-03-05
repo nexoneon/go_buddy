@@ -68,14 +68,14 @@ service cloud.firestore {
 
     // Services collection rules
     match /services/{serviceId} {
-      // Allow any authenticated user to read services
-      allow read: if isAuthenticated();
+      // Allow anyone (including guests) to read services
+      allow read: if true;
     }
 
     // Categories collection rules
     match /categories/{categoryId} {
-      // Allow any authenticated user to read categories
-      allow read: if isAuthenticated();
+      // Allow anyone (including guests) to read categories
+      allow read: if true;
     }
 
     // Orders collection rules
@@ -87,23 +87,23 @@ service cloud.firestore {
       // Allow users to update their own orders (e.g. cancel) - optional for now
     }
 
-    // About Us collection rules - readable by all authenticated users
+    // About Us collection rules
     match /about_us/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isAuthenticated() 
                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
     }
 
-    // FAQs collection rules - readable by all authenticated users
+    // FAQs collection rules
     match /faqs/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isAuthenticated() 
                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
     }
 
-    // Support collection rules - readable by all authenticated users
+    // Support collection rules
     match /support/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isAuthenticated() 
                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
     }
@@ -115,9 +115,10 @@ service cloud.firestore {
       allow update: if isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
     }
 
-    // Gallery Images collection rules - readable by all authenticated users
+    // Gallery Images collection rules
     match /gallery_images/{imageId} {
-      allow read: if isAuthenticated();
+      // Allow anyone (including guests) to read gallery images
+      allow read: if true;
       allow write: if isAuthenticated() 
                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_superuser == true;
     }

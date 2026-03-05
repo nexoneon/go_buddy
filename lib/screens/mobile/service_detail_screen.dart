@@ -9,6 +9,7 @@ import '../../services/connectivity_service.dart';
 import '../../services/favourite_service.dart';
 import '../../models/address_model.dart';
 import '../../config/config.dart';
+import 'login_screen.dart';
 import 'profile_screen.dart';
 import 'address_list_screen.dart';
 
@@ -82,12 +83,36 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     final uid = _authService.currentUser?.uid;
     if (uid == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please login to book'),
-            backgroundColor: Colors.red,
+        final shouldLogin = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Login Required'),
+            content: const Text('Please login to book a service.'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D7377),
+                ),
+                child: const Text('Login'),
+              ),
+            ],
           ),
         );
+
+        if (shouldLogin == true && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MobileLoginScreen()),
+          );
+        }
       }
       return;
     }
@@ -304,29 +329,36 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                       height: 56,
                                       clipBehavior: Clip.antiAlias,
                                       decoration: BoxDecoration(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.2),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(14),
                                       ),
                                       child:
                                           widget.service.imageUrl != null &&
-                                          widget.service.imageUrl!.isNotEmpty
+                                              widget
+                                                  .service
+                                                  .imageUrl!
+                                                  .isNotEmpty
                                           ? Image.network(
-                                            widget.service.imageUrl!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) =>
-                                                    const Icon(
-                                                      Icons.build_outlined,
-                                                      color: Colors.white,
-                                                      size: 28,
-                                                    ),
-                                          )
+                                              widget.service.imageUrl!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => const Icon(
+                                                    Icons.build_outlined,
+                                                    color: Colors.white,
+                                                    size: 28,
+                                                  ),
+                                            )
                                           : const Icon(
-                                            Icons.build_outlined,
-                                            color: Colors.white,
-                                            size: 28,
-                                          ),
+                                              Icons.build_outlined,
+                                              color: Colors.white,
+                                              size: 28,
+                                            ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
@@ -348,8 +380,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                           Text(
                                             '₹${widget.service.price.toStringAsFixed(0)}',
                                             style: TextStyle(
-                                              color:
-                                                  Colors.white.withAlpha(230),
+                                              color: Colors.white.withAlpha(
+                                                230,
+                                              ),
                                               fontSize: 22,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -423,8 +456,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                     labelText: 'Service Address',
                                     hintText: 'Select address',
                                     prefixIcon: const Icon(Icons.home_outlined),
-                                    suffixIcon:
-                                        const Icon(Icons.arrow_drop_down),
+                                    suffixIcon: const Icon(
+                                      Icons.arrow_drop_down,
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -478,8 +512,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
                                             color: Colors.grey[50],
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                             border: Border.all(
                                               color:
                                                   dateController.text.isNotEmpty
@@ -497,8 +532,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                                 Icons.calendar_today,
                                                 color:
                                                     dateController
-                                                            .text
-                                                            .isNotEmpty
+                                                        .text
+                                                        .isNotEmpty
                                                     ? const Color(0xFF0D7377)
                                                     : Colors.grey[600],
                                                 size: 20,
@@ -528,8 +563,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                                             FontWeight.w600,
                                                         color:
                                                             dateController
-                                                                    .text
-                                                                    .isEmpty
+                                                                .text
+                                                                .isEmpty
                                                             ? Colors.grey[400]
                                                             : Colors.black87,
                                                       ),
@@ -571,8 +606,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
                                             color: Colors.grey[50],
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                             border: Border.all(
                                               color:
                                                   timeController.text.isNotEmpty
@@ -590,8 +626,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                                 Icons.access_time,
                                                 color:
                                                     timeController
-                                                            .text
-                                                            .isNotEmpty
+                                                        .text
+                                                        .isNotEmpty
                                                     ? const Color(0xFF0D7377)
                                                     : Colors.grey[600],
                                                 size: 20,
@@ -621,8 +657,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                                             FontWeight.w600,
                                                         color:
                                                             timeController
-                                                                    .text
-                                                                    .isEmpty
+                                                                .text
+                                                                .isEmpty
                                                             ? Colors.grey[400]
                                                             : Colors.black87,
                                                       ),
@@ -692,29 +728,33 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                           filled: true,
                                           fillColor: Colors.white,
                                           border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                             borderSide: BorderSide(
                                               color: Colors.grey[300]!,
                                             ),
                                           ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                             borderSide: BorderSide(
                                               color: Colors.grey[300]!,
                                             ),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                             borderSide: const BorderSide(
                                               color: Color(0xFF0D7377),
                                               width: 2,
                                             ),
                                           ),
-                                          contentPadding:
-                                              const EdgeInsets.all(12),
+                                          contentPadding: const EdgeInsets.all(
+                                            12,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -726,14 +766,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color:
-                                        termsAccepted
+                                    color: termsAccepted
                                         ? Colors.green.withAlpha(15)
                                         : Colors.orange.withAlpha(15),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color:
-                                          termsAccepted
+                                      color: termsAccepted
                                           ? Colors.green.withAlpha(50)
                                           : Colors.orange.withAlpha(50),
                                     ),
@@ -746,8 +784,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                         children: [
                                           Icon(
                                             Icons.policy_outlined,
-                                            color:
-                                                termsAccepted
+                                            color: termsAccepted
                                                 ? Colors.green
                                                 : Colors.orange,
                                             size: 20,
@@ -757,8 +794,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                             'Terms & Conditions',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              color:
-                                                  termsAccepted
+                                              color: termsAccepted
                                                   ? Colors.green[700]
                                                   : Colors.orange[700],
                                             ),
@@ -766,7 +802,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 12),
-                                      if (widget.service.customerResponsibility !=
+                                      if (widget
+                                                  .service
+                                                  .customerResponsibility !=
                                               null &&
                                           widget
                                               .service
@@ -774,7 +812,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                               .isNotEmpty)
                                         _buildTermItem(
                                           'Customer Responsibility',
-                                          widget.service.customerResponsibility!,
+                                          widget
+                                              .service
+                                              .customerResponsibility!,
                                           Icons.person_outline,
                                         ),
                                       if (widget.service.note != null &&
@@ -799,27 +839,24 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                               width: 24,
                                               height: 24,
                                               decoration: BoxDecoration(
-                                                color:
-                                                    termsAccepted
+                                                color: termsAccepted
                                                     ? const Color(0xFF0D7377)
                                                     : Colors.white,
                                                 borderRadius:
                                                     BorderRadius.circular(6),
                                                 border: Border.all(
-                                                  color:
-                                                      termsAccepted
+                                                  color: termsAccepted
                                                       ? const Color(0xFF0D7377)
                                                       : Colors.grey[400]!,
                                                   width: 2,
                                                 ),
                                               ),
-                                              child:
-                                                  termsAccepted
+                                              child: termsAccepted
                                                   ? const Icon(
-                                                    Icons.check,
-                                                    color: Colors.white,
-                                                    size: 16,
-                                                  )
+                                                      Icons.check,
+                                                      color: Colors.white,
+                                                      size: 16,
+                                                    )
                                                   : null,
                                             ),
                                             const SizedBox(width: 12),
@@ -871,93 +908,95 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed:
-                          (isBooking || !isFormValid)
+                      onPressed: (isBooking || !isFormValid)
                           ? null
                           : () async {
-                            if (formKey.currentState!.validate()) {
-                              setDialogState(() => isBooking = true);
-                              try {
-                                final user = _authService.currentUser;
+                              if (formKey.currentState!.validate()) {
+                                setDialogState(() => isBooking = true);
+                                try {
+                                  final user = _authService.currentUser;
 
-                                if (user == null) {
+                                  if (user == null) {
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Please login to book'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  final order = OrderModel(
+                                    id: '', // Auto-generated
+                                    userId: user.uid,
+                                    serviceId: widget.service.id,
+                                    serviceName: widget.service.name,
+                                    serviceImageUrl: '',
+                                    amount: widget.service.price,
+                                    status: 'pending',
+                                    bookingDate: selectedDate!,
+                                    bookingTime: timeController.text,
+                                    address: addressController.text,
+                                    userPhone: user.phoneNumber ?? '',
+                                    createdAt: DateTime.now(),
+                                    termsAccepted: termsAccepted,
+                                    customerInstructions:
+                                        instructionsController.text.isNotEmpty
+                                        ? instructionsController.text
+                                        : null,
+                                  );
+
+                                  await _orderService.createOrder(order);
+
                                   if (context.mounted) {
-                                    Navigator.pop(context);
+                                    Navigator.pop(context); // Close sheet
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Please login to book'),
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Text(
+                                              'Order placed successfully!',
+                                            ),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.green,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: $e'),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
                                   }
-                                  return;
-                                }
-
-                                final order = OrderModel(
-                                  id: '', // Auto-generated
-                                  userId: user.uid,
-                                  serviceId: widget.service.id,
-                                  serviceName: widget.service.name,
-                                  serviceImageUrl: '',
-                                  amount: widget.service.price,
-                                  status: 'pending',
-                                  bookingDate: selectedDate!,
-                                  bookingTime: timeController.text,
-                                  address: addressController.text,
-                                  userPhone: user.phoneNumber ?? '',
-                                  createdAt: DateTime.now(),
-                                  termsAccepted: termsAccepted,
-                                  customerInstructions:
-                                      instructionsController.text.isNotEmpty
-                                      ? instructionsController.text
-                                      : null,
-                                );
-
-                                await _orderService.createOrder(order);
-
-                                if (context.mounted) {
-                                  Navigator.pop(context); // Close sheet
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.check_circle,
-                                            color: Colors.white,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          const Text(
-                                            'Order placed successfully!',
-                                          ),
-                                        ],
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              } finally {
-                                if (context.mounted) {
-                                  setDialogState(() => isBooking = false);
+                                } finally {
+                                  if (context.mounted) {
+                                    setDialogState(() => isBooking = false);
+                                  }
                                 }
                               }
-                            }
-                          },
+                            },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isFormValid
+                        backgroundColor: isFormValid
                             ? const Color(0xFF0D7377)
                             : Colors.grey[300],
                         padding: const EdgeInsets.symmetric(vertical: 18),
@@ -966,41 +1005,40 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                         elevation: isFormValid ? 2 : 0,
                       ),
-                      child:
-                          isBooking
+                      child: isBooking
                           ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                          : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isFormValid
-                                    ? Icons.check_circle
-                                    : Icons.pending,
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
                                 color: Colors.white,
-                                size: 22,
+                                strokeWidth: 2,
                               ),
-                              const SizedBox(width: 10),
-                              Text(
-                                isFormValid
-                                    ? 'Confirm Booking'
-                                    : termsAccepted
-                                    ? 'Fill all fields'
-                                    : 'Accept terms to continue',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isFormValid
+                                      ? Icons.check_circle
+                                      : Icons.pending,
                                   color: Colors.white,
+                                  size: 22,
                                 ),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  isFormValid
+                                      ? 'Confirm Booking'
+                                      : termsAccepted
+                                      ? 'Fill all fields'
+                                      : 'Accept terms to continue',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                 ),
@@ -1010,7 +1048,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         },
       ),
     );
-
   }
 
   Widget _buildTermItem(String title, String content, IconData icon) {

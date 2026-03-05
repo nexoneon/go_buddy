@@ -59,7 +59,9 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
 
   Future<void> _checkAuthAndNavigate() async {
     if (_hasNavigated) {
-      debugPrint('🚀 [HomeScreen] Already navigated once, skipping splash logic');
+      debugPrint(
+        '🚀 [HomeScreen] Already navigated once, skipping splash logic',
+      );
       return;
     }
 
@@ -74,8 +76,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
     final currentUser = _authService.currentUser;
 
     if (currentUser == null) {
-      // Not logged in - go to login screen
-      _navigateToLogin();
+      // Not logged in - go to main home screen as guest
+      _navigateToMainHome();
       return;
     }
 

@@ -176,6 +176,42 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Delete the current user's account
+  Future<bool> deleteAccount() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final user = _auth.currentUser;
+      if (user != null) {
+        await user.delete();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _errorMessage = _getErrorMessage(e.code);
+      if (e.code == 'requires-recent-login') {
+        _errorMessage =
+            'This operation is sensitive and requires recent authentication. Please log in again before retrying this action.';
+      }
+      notifyListeners();
+      debugPrint('❌ Error deleting account: ${e.code} - ${e.message}');
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Failed to delete account. Please try again.';
+      notifyListeners();
+      debugPrint('❌ Error deleting account: $e');
+      return false;
+    }
+  }
+
   /// Sign in with email and password (for admin web login)
   Future<bool> signInWithEmailPassword({
     required String email,

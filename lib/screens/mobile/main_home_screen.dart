@@ -142,9 +142,82 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MobileLoginScreen()),
+          MaterialPageRoute(builder: (context) => const MainHomeScreen()),
           (route) => false,
         );
+      }
+    }
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    final user = _userService.currentUser;
+    if (user == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'Are you sure you want to delete your account? This action is permanent and all your data will be lost.',
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final uid = user.uid;
+      // First delete data from Firestore
+      final dataDeleted = await _userService.deleteUser(uid);
+
+      if (dataDeleted) {
+        // Then delete authentication account
+        final authDeleted = await _authService.deleteAccount();
+
+        if (authDeleted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Account deleted successfully')),
+            );
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainHomeScreen()),
+              (route) => false,
+            );
+          }
+        } else {
+          // If auth deletion fails (e.g., requires recent login)
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  _authService.errorMessage ?? 'Failed to delete account auth',
+                ),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to delete account data'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
       }
     }
   }
@@ -214,7 +287,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       case 0:
         return _buildFavouritesPage(); // Favourites
       case 1:
-        return MyOrdersScreen(); // My Orders
+        return _buildMyOrdersPage(); // My Orders
       case 2:
         return _buildBody(); // Home
       case 3:
@@ -224,6 +297,58 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       default:
         return _buildBody();
     }
+  }
+
+  Widget _buildMyOrdersPage() {
+    final user = _userService.currentUser;
+
+    if (user == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.shopping_bag_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Login to view your orders',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF4A4A4A),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MobileLoginScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Login Now'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return MyOrdersScreen();
   }
 
   Widget _buildFavouritesPage() {
@@ -428,17 +553,41 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    user?.fullName ?? 'User',
+                    user != null && user.fullName.isNotEmpty
+                        ? user.fullName
+                        : (user != null ? 'User' : 'Guest User'),
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    user?.phoneNumber ?? '',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
+                  if (user != null)
+                    Text(
+                      user.phoneNumber.isNotEmpty ? user.phoneNumber : '',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  if (user == null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MobileLoginScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Login / Sign Up'),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -472,6 +621,10 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   subtitle: const Text('View and edit your profile'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
+                    if (user == null) {
+                      _showLoginPrompt();
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -501,6 +654,10 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   subtitle: const Text('Add or edit your addresses'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
+                    if (user == null) {
+                      _showLoginPrompt();
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -530,6 +687,10 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                   subtitle: const Text('Raise a request'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
+                    if (user == null) {
+                      _showLoginPrompt();
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -538,30 +699,86 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                     );
                   },
                 ),
+                if (user != null) ...[
+                  const Divider(height: 1),
+                  // Delete Account Option
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withAlpha(26),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.delete_forever,
+                        color: Colors.red,
+                      ),
+                    ),
+                    title: const Text(
+                      'Delete Account',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red,
+                      ),
+                    ),
+                    subtitle: const Text('Permanently remove your data'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: _handleDeleteAccount,
+                  ),
+                ],
                 const Divider(height: 1),
                 // Logout Option
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withAlpha(26),
-                      borderRadius: BorderRadius.circular(8),
+                if (user != null)
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withAlpha(26),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.logout, color: Colors.orange),
                     ),
-                    child: const Icon(Icons.logout, color: Colors.red),
-                  ),
-                  title: const Text(
-                    'Logout',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: Colors.red,
+                    title: const Text(
+                      'Logout',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.orange,
+                      ),
                     ),
+                    subtitle: const Text('Sign out of your account'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: _handleLogout,
                   ),
-                  subtitle: const Text('Sign out of your account'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: _handleLogout,
-                ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLoginPrompt() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Login Required'),
+        content: const Text('Please login to access this feature.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MobileLoginScreen(),
+                ),
+              );
+            },
+            child: const Text('Login'),
           ),
         ],
       ),
@@ -592,7 +809,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                user?.fullName ?? 'User',
+                user != null && user.fullName.isNotEmpty
+                    ? user.fullName
+                    : (user != null ? 'User' : 'Guest User'),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

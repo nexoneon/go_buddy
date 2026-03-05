@@ -207,6 +207,38 @@ class UserService extends ChangeNotifier {
     }
   }
 
+  /// Delete user data from Firestore
+  Future<bool> deleteUser(String uid) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // Get user to check for profile picture
+      final user = await getUser(uid);
+      if (user != null &&
+          user.profilePicture != null &&
+          user.profilePicture!.isNotEmpty) {
+        await deleteProfilePicture(user.profilePicture!);
+      }
+
+      // Delete user document
+      await _firestore.collection(_collection).doc(uid).delete();
+
+      _currentUser = null;
+      _isLoading = false;
+      notifyListeners();
+
+      debugPrint('✅ User data deleted: $uid');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error deleting user data: $e');
+      _isLoading = false;
+      _errorMessage = 'Failed to delete user data';
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Clear current user (on logout)
   void clearUser() {
     _currentUser = null;
